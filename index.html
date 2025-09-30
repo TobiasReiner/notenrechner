@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notenrechner – Deutsch &amp; Mathe</title>
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    /*
+      Dieses Stylesheet definiert einen klaren, blauen Stil für den Notenrechner.
+      Die gewählte Farbpalette ist kontrastreich und freundlich, sodass die Seite
+      auch von ungeübten Benutzer:innen problemlos bedient werden kann.
+    */
+    :root{
+      --brand:#0d6efd; /* primärer Blauton – gleiche Farbe wie Bootstrap primary */
+      --brand-light:#e9f2ff; /* sehr helles Blau für Hintergründe */
+      --text-dark:#1a2a4a; /* dunkle Textfarbe für gute Lesbarkeit */
+    }
+    body{
+      background:var(--brand-light);
+      color:var(--text-dark);
+    }
+    .navbar{
+      background-color:#fff;
+      border-bottom:1px solid #e0e4f0;
+    }
+    .card{
+      border:0;
+      box-shadow:0 4px 16px rgba(0,0,0,0.05);
+      border-radius:12px;
+    }
+    .chip{
+      background-color:var(--brand-light);
+      color:var(--brand);
+      border-radius:999px;
+      padding:.4rem .8rem;
+      font-weight:600;
+    }
+    .weight-badge{
+      min-width:2.8rem;
+      text-align:right;
+      margin-left:.25rem;
+    }
+    .sum-ok{ color: #198754; }
+    .sum-bad{ color: #dc3545; }
+    .note-pill{
+      font-weight:700;
+      padding:.35rem .7rem;
+      border-radius:999px;
+      display:inline-block;
+    }
+    .note-1{ background:#e6f7e6; color:#0b6630; }
+    .note-2{ background:#e6effb; color:#11468f; }
+    .note-3{ background:#fff7e6; color:#6c5105; }
+    .note-4{ background:#ffeae6; color:#9c2c00; }
+    .note-5{ background:#fde7eb; color:#850c1a; }
+    /* Tische optimieren */
+    .table th, .table td{ padding: .35rem .5rem; white-space:nowrap; }
+    .table-responsive{ overflow-x:auto; }
+    /* Canvas responsive */
+    canvas{ max-width:100%; height:auto; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <span class="navbar-brand fw-bold"><i class="bi bi-calculator"></i> Notenrechner</span>
+    </div>
+  </nav>
+
+  <main class="container my-4 my-md-5">
+    <div class="row g-4">
+      <div class="col-12">
+        <div class="chip"><i class="bi bi-info-circle me-1"></i> Wähle pro Kategorie beliebig viele Zeilen: Punkte, Fehler, Vergessen (HU), Note (1–5), Prozent</div>
+      </div>
+      <!-- Tabs für Deutsch und Mathe -->
+      <div class="col-12">
+        <ul class="nav nav-pills" id="fachTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-de" data-bs-toggle="tab" data-bs-target="#pane-de" type="button" role="tab" aria-controls="pane-de" aria-selected="true">Deutsch</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-ma" data-bs-toggle="tab" data-bs-target="#pane-ma" type="button" role="tab" aria-controls="pane-ma" aria-selected="false">Mathematik</button>
+          </li>
+        </ul>
+      </div>
+      <div class="col-12 tab-content">
+        <!-- Deutsch-Panel -->
+        <div class="tab-pane fade show active" id="pane-de" role="tabpanel" aria-labelledby="tab-de">
+          <div class="row g-4">
+            <div class="col-lg-7">
+              <!-- Gewichtungen -->
+              <div class="card p-3 p-md-4">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Gewichtungen (Deutsch)</h5>
+                  <span id="sumDE" class="fw-bold sum-bad">Summe: 0 %</span>
+                </div>
+                <hr>
+                <div class="row g-3">
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">Schularbeit</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wDE_sa" type="number" class="form-control" min="0" max="100" value="40" aria-label="Gewichtung Schularbeit" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">Ansage</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wDE_ans" type="number" class="form-control" min="0" max="100" value="20" aria-label="Gewichtung Ansage" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">Hausübung</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wDE_hu" type="number" class="form-control" min="0" max="100" value="20" aria-label="Gewichtung Hausübung" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">Mitarbeit</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wDE_mi" type="number" class="form-control" min="0" max="100" value="20" aria-label="Gewichtung Mitarbeit" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Leistungen Deutsch -->
+              <div class="card p-3 p-md-4 mt-4">
+                <h5>Leistungen erfassen (Deutsch)</h5>
+                <p class="small text-secondary mb-2">Füge Zeilen hinzu, um die Ergebnisse pro Kategorie einzutragen. Der Durchschnitt wird automatisch berechnet.</p>
+                <!-- Tabelle Schularbeit -->
+                <div class="mt-3">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Schularbeit</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('DE','sa')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblDE_sa" aria-label="Schularbeitstabelle Deutsch">
+                      <thead>
+                        <tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr>
+                      </thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgDE_sa">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+                <!-- Tabelle Ansage -->
+                <div class="mt-4">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Ansage</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('DE','ans')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblDE_ans" aria-label="Ansagetabelle Deutsch">
+                      <thead>
+                        <tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr>
+                      </thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgDE_ans">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+                <!-- Tabelle Hausübung -->
+                <div class="mt-4">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Hausübung</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('DE','hu','vergessen')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblDE_hu" aria-label="Hausübungstabelle Deutsch">
+                      <thead>
+                        <tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr>
+                      </thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgDE_hu">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+                <!-- Tabelle Mitarbeit -->
+                <div class="mt-4">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Mitarbeit</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('DE','mi','prozent')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblDE_mi" aria-label="Mitarbeitstabelle Deutsch">
+                      <thead>
+                        <tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr>
+                      </thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgDE_mi">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Ergebnis Deutsch -->
+            <div class="col-lg-5">
+              <div class="card p-3 p-md-4">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Ergebnis Deutsch</h5>
+                  <span id="gradeDE" class="note-pill note-5">–</span>
+                </div>
+                <hr>
+                <div class="row g-3">
+                  <div class="col-6">
+                    <div class="p-3 bg-white border rounded text-center">
+                      <div class="small text-secondary">Gesamt-%</div>
+                      <div id="totalPctDE" class="display-6">– %</div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="p-3 bg-white border rounded text-center">
+                      <div class="small text-secondary">Gewichtungs-Summe</div>
+                      <div id="sumDEmini" class="h3">0 %</div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <canvas id="chartDEweights" height="160"></canvas>
+                  </div>
+                  <div class="col-12">
+                    <canvas id="chartDEcats" height="160"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Mathematik-Panel -->
+        <div class="tab-pane fade" id="pane-ma" role="tabpanel" aria-labelledby="tab-ma">
+          <div class="row g-4">
+            <div class="col-lg-7">
+              <div class="card p-3 p-md-4">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Gewichtungen (Mathematik)</h5>
+                  <span id="sumMA" class="fw-bold sum-bad">Summe: 0 %</span>
+                </div>
+                <hr>
+                <div class="row g-3">
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">Schularbeiten</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wMA_sa" type="number" class="form-control" min="0" max="100" value="50" aria-label="Gewichtung Schularbeiten" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">LZK</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wMA_lzk" type="number" class="form-control" min="0" max="100" value="20" aria-label="Gewichtung LZK" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">Hausübung</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wMA_hu" type="number" class="form-control" min="0" max="100" value="15" aria-label="Gewichtung Hausübung Mathe" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">Mitarbeit</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wMA_mi" type="number" class="form-control" min="0" max="100" value="15" aria-label="Gewichtung Mitarbeit Mathe" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Leistungen Mathe -->
+              <div class="card p-3 p-md-4 mt-4">
+                <h5>Leistungen erfassen (Mathematik)</h5>
+                <p class="small text-secondary mb-2">Auch hier beliebig viele Einträge pro Kategorie. Der Durchschnitt wird aus allen Zeilen berechnet.</p>
+                <!-- SA -->
+                <div class="mt-3">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Schularbeiten</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('MA','sa')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblMA_sa" aria-label="Schularbeitstabelle Mathe">
+                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgMA_sa">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+                <!-- LZK -->
+                <div class="mt-4">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">LZK</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('MA','lzk')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblMA_lzk" aria-label="LZK Tabelle Mathe">
+                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgMA_lzk">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+                <!-- HU -->
+                <div class="mt-4">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Hausübung</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('MA','hu','vergessen')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblMA_hu" aria-label="Hausübungstabelle Mathe">
+                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgMA_hu">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+                <!-- Mitarbeit -->
+                <div class="mt-4">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Mitarbeit</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('MA','mi','prozent')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblMA_mi" aria-label="Mitarbeitstabelle Mathe">
+                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgMA_mi">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Ergebnis Mathe -->
+            <div class="col-lg-5">
+              <div class="card p-3 p-md-4">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Ergebnis Mathe</h5>
+                  <span id="gradeMA" class="note-pill note-5">–</span>
+                </div>
+                <hr>
+                <div class="row g-3">
+                  <div class="col-6">
+                    <div class="p-3 bg-white border rounded text-center">
+                      <div class="small text-secondary">Gesamt-%</div>
+                      <div id="totalPctMA" class="display-6">– %</div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="p-3 bg-white border rounded text-center">
+                      <div class="small text-secondary">Gewichtungs-Summe</div>
+                      <div id="sumMAmini" class="h3">0 %</div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <canvas id="chartMAweights" height="160"></canvas>
+                  </div>
+                  <div class="col-12">
+                    <canvas id="chartMAcats" height="160"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-4">
+      <div class="chip">
+        <i class="bi bi-question-circle"></i> Punkte: <em>erzielt / maximal</em> · Fehler: <em>Fehler / Gesamtaufgaben</em> · Vergessen (HU): <em>vergessen / vergebene</em> · Note 1–5 → Prozent (über Schwellen)
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal für Notenschwellen -->
+  <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Bewertungsschwellen (Notenskala)</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+        </div>
+        <div class="modal-body">
+          <p class="small text-secondary mb-2">Passe hier die Grenze (in Prozent) an, ab der die jeweilige Note erreicht wird. Unterhalb der Note-4-Grenze wird die Note 5 vergeben.</p>
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label small">Note 1 ab (%)</label>
+              <input id="thr1" type="number" min="0" max="100" value="90" class="form-control" />
+            </div>
+            <div class="col-6">
+              <label class="form-label small">Note 2 ab (%)</label>
+              <input id="thr2" type="number" min="0" max="100" value="80" class="form-control" />
+            </div>
+            <div class="col-6">
+              <label class="form-label small">Note 3 ab (%)</label>
+              <input id="thr3" type="number" min="0" max="100" value="65" class="form-control" />
+            </div>
+            <div class="col-6">
+              <label class="form-label small">Note 4 ab (%)</label>
+              <input id="thr4" type="number" min="0" max="100" value="50" class="form-control" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" data-bs-dismiss="modal" onclick="recalcAll()">Übernehmen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zeilenvorlage als Template -->
+  <template id="rowTemplate">
+    <tr>
+      <td>
+        <select class="form-select form-select-sm typeSel">
+          <option value="punkte">Punkte</option>
+          <option value="fehler">Fehler</option>
+          <option value="vergessen">Vergessen (HU)</option>
+          <option value="note">Note (1–5)</option>
+          <option value="prozent">Prozent</option>
+        </select>
+      </td>
+      <td class="text-end"><input type="number" class="form-control form-control-sm valA" placeholder="…" /></td>
+      <td class="text-end"><input type="number" class="form-control form-control-sm valB" placeholder="…" /></td>
+      <td class="text-end fw-semibold"><span class="pct">–</span> %</td>
+      <td class="text-end"><button class="btn btn-sm btn-outline-danger" title="Zeile entfernen"><i class="bi bi-trash"></i></button></td>
+    </tr>
+  </template>
+
+  <script>
+    /*
+      ------------------------------------------------------------
+      JavaScript-Logik für den Notenrechner
+      ------------------------------------------------------------
+      Enthält:
+      - Umrechnen verschiedener Bewertungsarten in Prozent
+      - Dynamisches Hinzufügen und Entfernen von Zeilen
+      - Berechnung der Kategorie-Durchschnitte, Gesamtprozent und Note
+      - Aktualisierung von Diagrammen (Chart.js)
+    */
+    // Helferfunktionen
+    const el = id => document.getElementById(id);
+    const f2 = n => (isFinite(n)? n.toFixed(1) : "–");
+    const clamp = (v,min,max) => Math.max(min, Math.min(max, v));
+
+    // Globale Notenschwellen (können über Modal angepasst werden)
+    const thresholds = { n1:90, n2:80, n3:65, n4:50 };
+
+    // Notenumrechnung: Prozent → Note (1–5)
+    function pct2note(p){
+      if (!isFinite(p)) return 5;
+      if (p >= thresholds.n1) return 1;
+      if (p >= thresholds.n2) return 2;
+      if (p >= thresholds.n3) return 3;
+      if (p >= thresholds.n4) return 4;
+      return 5;
+    }
+
+    function noteClass(n){ return `note-${clamp(n,1,5)}`; }
+
+    // Umwandlung einzelner Zeile in Prozent je nach Art
+    function rowToPercent(type, a, b){
+      const x = parseFloat(a);
+      const y = parseFloat(b);
+      switch(type){
+        case 'punkte': // erzielt / max
+          if (y>0) return clamp(100 * x / y, 0, 100);
+          return NaN;
+        case 'fehler': // Fehler / Gesamt
+          if (y>0) return clamp(100 * (1 - x / y), 0, 100);
+          return NaN;
+        case 'vergessen': // vergessen / total
+          if (y>0) return clamp(100 * (1 - x / y), 0, 100);
+          return NaN;
+        case 'note': // Note 1–5
+          const n = clamp(Math.round(x),1,5);
+          // Midpoints für jede Note anhand der Schwellen
+          const {n1,n2,n3,n4} = thresholds;
+          const map = {
+            1: (n1+100)/2,
+            2: (n2+n1)/2,
+            3: (n3+n2)/2,
+            4: (n4+n3)/2,
+            5: (0+n4)/2
+          };
+          return clamp(map[n], 0, 100);
+        case 'prozent':
+          return clamp(x, 0, 100);
+        default:
+          return NaN;
+      }
+    }
+
+    // Hinzufügen einer neuen Zeile in eine bestimmte Tabelle
+    function addRow(fach, cat, preferredType){
+      const table = el(`tbl${fach}_${cat}`).querySelector('tbody');
+      const tpl = document.getElementById('rowTemplate').content.cloneNode(true);
+      const tr = tpl.querySelector('tr');
+      const typeSel = tr.querySelector('.typeSel');
+      const valA = tr.querySelector('.valA');
+      const valB = tr.querySelector('.valB');
+      const pctSpan = tr.querySelector('.pct');
+      const delBtn = tr.querySelector('button');
+
+      // Wenn ein bevorzugter Typ angegeben wurde, diesen auswählen
+      if (preferredType){
+        typeSel.value = preferredType;
+      }
+      adaptInputs();
+
+      // Anpassung der Placeholder je nach Art
+      function adaptInputs(){
+        const t = typeSel.value;
+        valA.disabled = false;
+        valB.disabled = false;
+        if (t === 'punkte'){
+          valA.placeholder = 'erzielt'; valB.placeholder = 'max.';
+        } else if (t === 'fehler'){
+          valA.placeholder = 'Fehler'; valB.placeholder = 'gesamt';
+        } else if (t === 'vergessen'){
+          valA.placeholder = 'vergessen'; valB.placeholder = 'vergeben';
+        } else if (t === 'note'){
+          valA.placeholder = '1–5'; valB.value = '';
+          valB.placeholder = '—'; valB.disabled = true;
+        } else if (t === 'prozent'){
+          valA.placeholder = '%'; valB.value = '';
+          valB.placeholder = '—'; valB.disabled = true;
+        }
+        compute();
+      }
+      
+      // Rechne die Prozentzahl und aktualisiere UI
+      function compute(){
+        const t = typeSel.value;
+        const p = rowToPercent(t, valA.value, valB.value);
+        pctSpan.textContent = isFinite(p) ? f2(p) : '–';
+        recalcAll();
+      }
+      
+      // Eventlistener
+      typeSel.addEventListener('change', adaptInputs);
+      [valA,valB].forEach(elm => elm.addEventListener('input', compute));
+      delBtn.addEventListener('click', () => { tr.remove(); recalcAll(); });
+      
+      table.appendChild(tr);
+    }
+
+    // Lese Gewichtungsfelder aus
+    function readWeights(f){
+      if (f === 'DE'){
+        return { sa: parseFloat(el('wDE_sa').value)||0, ans: parseFloat(el('wDE_ans').value)||0, hu: parseFloat(el('wDE_hu').value)||0, mi: parseFloat(el('wDE_mi').value)||0 };
+      } else {
+        return { sa: parseFloat(el('wMA_sa').value)||0, lzk: parseFloat(el('wMA_lzk').value)||0, hu: parseFloat(el('wMA_hu').value)||0, mi: parseFloat(el('wMA_mi').value)||0 };
+      }
+    }
+
+    // Durchschnitt pro Kategorie
+    function catAvg(f, cat){
+      const rows = el(`tbl${f}_${cat}`).querySelectorAll('tbody tr');
+      let sum=0, n=0;
+      rows.forEach(r => {
+        const t = r.querySelector('.typeSel').value;
+        const a = r.querySelector('.valA').value;
+        const b = r.querySelector('.valB').value;
+        const p = rowToPercent(t, a, b);
+        if (isFinite(p)){
+          sum += p;
+          n++;
+        }
+      });
+      const avg = n ? sum / n : NaN;
+      el(`avg${f}_${cat}`).textContent = isFinite(avg) ? f2(avg) : '–';
+      return avg;
+    }
+
+    // Gesamtberechnung
+    function calcTotals(f){
+      const weights = readWeights(f);
+      const cats = f === 'DE' ? ['sa','ans','hu','mi'] : ['sa','lzk','hu','mi'];
+      let wsum = 0;
+      let acc = 0;
+      cats.forEach(c => {
+        const w = weights[c] || 0;
+        const avg = catAvg(f, c);
+        if (isFinite(avg) && w > 0){ acc += avg * (w/100); }
+        wsum += w;
+      });
+      return { total: (wsum === 100 ? acc : NaN), wsum, partial: acc };
+    }
+
+    // Aktualisiere alles nach Änderungen
+    function updateSummary(f){
+      const { total, wsum, partial } = calcTotals(f);
+      const sumEl = el(f === 'DE' ? 'sumDE' : 'sumMA');
+      const miniEl = el(f === 'DE' ? 'sumDEmini' : 'sumMAmini');
+      sumEl.textContent = `Summe: ${wsum} %`;
+      miniEl.textContent = `${wsum} %`;
+      sumEl.classList.toggle('sum-ok', wsum === 100);
+      sumEl.classList.toggle('sum-bad', wsum !== 100);
+      const totalPctEl = el(f === 'DE' ? 'totalPctDE' : 'totalPctMA');
+      const gradeEl = el(f === 'DE' ? 'gradeDE' : 'gradeMA');
+      const pct = (wsum === 100) ? partial : NaN;
+      totalPctEl.textContent = isFinite(pct) ? `${f2(pct)} %` : '– %';
+      const note = isFinite(pct) ? pct2note(pct) : 5;
+      gradeEl.className = `note-pill ${noteClass(note)}`;
+      gradeEl.textContent = isFinite(pct) ? `Note ${note}` : '–';
+      // Charts
+      updateCharts(f, readWeights(f));
+    }
+
+    // Aktualisiere beide Fächer zusammen
+    function recalcAll(){
+      // Schwellen aktualisieren
+      thresholds.n1 = parseFloat(el('thr1').value) || thresholds.n1;
+      thresholds.n2 = parseFloat(el('thr2').value) || thresholds.n2;
+      thresholds.n3 = parseFloat(el('thr3').value) || thresholds.n3;
+      thresholds.n4 = parseFloat(el('thr4').value) || thresholds.n4;
+      updateSummary('DE');
+      updateSummary('MA');
+    }
+
+    // Charts-Instanzen
+    const charts = { DE:{ w:null, c:null }, MA:{ w:null, c:null } };
+    function updateCharts(f, weights){
+      const cats = f === 'DE' ? ['sa','ans','hu','mi'] : ['sa','lzk','hu','mi'];
+      const labelMap = { sa: f==='DE'? 'Schularbeit(en)' : 'Schularbeiten', ans:'Ansage', hu:'Hausübung', mi:'Mitarbeit', lzk:'LZK' };
+      const labels = cats.map(k => labelMap[k]);
+      const weightVals = cats.map(k => weights[k] || 0);
+      const catVals = cats.map(k => {
+        const txt = el(`avg${f}_${k}`).textContent.replace(',', '.');
+        const num = parseFloat(txt);
+        return isFinite(num) ? num : 0;
+      });
+      // Donut für Gewichtungen
+      const wCanvas = el(f === 'DE' ? 'chartDEweights' : 'chartMAweights');
+      const cCanvas = el(f === 'DE' ? 'chartDEcats' : 'chartMAcats');
+      if (charts[f].w) charts[f].w.destroy();
+      charts[f].w = new Chart(wCanvas, {
+        type:'doughnut',
+        data:{ labels: labels, datasets:[{ data: weightVals, backgroundColor:[ '#0d6efd', '#0dcaf0', '#ffc107', '#198754' ] }]},
+        options:{ plugins:{ legend:{ position:'bottom' }, title:{ display:true, text:'Gewichtungs-Verteilung' } }, cutout:'60%' }
+      });
+      // Balkendiagramm für Kategorien
+      if (charts[f].c) charts[f].c.destroy();
+      charts[f].c = new Chart(cCanvas, {
+        type:'bar',
+        data:{ labels: labels, datasets:[{ label:'Kategorie-Ø (%)', data: catVals, backgroundColor:'#0d6efd' }]},
+        options:{ plugins:{ legend:{ display:false }, title:{ display:true, text:'Kategorien-Durchschnitte' } }, scales:{ y:{ beginAtZero:true, max:100 } } }
+      });
+    }
+
+    // Bind Weight-Inputs
+    function bindWeightInputs(){
+      ['wDE_sa','wDE_ans','wDE_hu','wDE_mi','wMA_sa','wMA_lzk','wMA_hu','wMA_mi'].forEach(id => el(id).addEventListener('input', recalcAll));
+    }
+
+    // Beispielzeilen zum schnellen Start
+    function seedRows(){
+      // Deutsch
+      addRow('DE','sa','punkte');
+      addRow('DE','ans','punkte');
+      addRow('DE','hu','vergessen');
+      addRow('DE','mi','prozent');
+      // Mathe
+      addRow('MA','sa','punkte');
+      addRow('MA','lzk','fehler');
+      addRow('MA','hu','vergessen');
+      addRow('MA','mi','prozent');
+      // Fülle mit einigen Werten
+      const fill = (tblId, a, b) => {
+        const row = document.querySelector(`#${tblId} tbody tr`);
+        if (row){
+          row.querySelector('.valA').value = a;
+          const vb = row.querySelector('.valB');
+          if (!vb.disabled) vb.value = b;
+        }
+      };
+      fill('tblDE_sa', 45, 50);
+      fill('tblDE_ans', 18, 20);
+      fill('tblDE_hu', 1, 10);
+      fill('tblDE_mi', 85, 0);
+      fill('tblMA_sa', 40, 50);
+      // LZK Fehler: 3 Fehler bei 20 Aufgaben
+      document.querySelector('#tblMA_lzk tbody tr .typeSel').value = 'fehler';
+      fill('tblMA_lzk', 3, 20);
+      fill('tblMA_hu', 2, 10);
+      fill('tblMA_mi', 90, 0);
+      recalcAll();
+    }
+
+    // Initialisieren nach DOM-Load
+    document.addEventListener('DOMContentLoaded', () => {
+      bindWeightInputs();
+      seedRows();
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
