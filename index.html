@@ -667,11 +667,15 @@
     // ======= Firebase Authentication & Child Management =======
     // NOTE: Replace the following configuration with your own Firebase project settings.
     const firebaseConfig = {
-      // Configuration for the notenrechner Firebase project
-      apiKey: "AIzaSyBIrMGr1Vz8vo7C_xa4hVd6Z0Y00wVPUQ8",
+      // Firebase configuration for the notenrechner project. These values come
+      // from the Firebase console (Project settings → Allgemein → Deine Apps)
+      // and must match exactly to enable authentication and Firestore access.
+      apiKey: "AIzaSyBIrMGr1vz8vo7C_xa4aHVd62YOOoWPUQ8",
       authDomain: "notenrechner-d3101.firebaseapp.com",
       projectId: "notenrechner-d3101",
-      storageBucket: "notenrechner-d3101.appspot.com",
+      // Use the "firebasestorage.app" domain as provided by Firebase instead of the
+      // older "appspot.com" domain so that Cloud Storage and Firestore work properly.
+      storageBucket: "notenrechner-d3101.firebasestorage.app",
       messagingSenderId: "14207910121",
       appId: "1:14207910121:web:3eba1777716c92c41df078"
     };
