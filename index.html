@@ -686,9 +686,22 @@
     function generateId(){
       return Date.now().toString(36) + Math.random().toString(36).substr(2,5);
     }
-    function updateChildSelect(){
+    /**
+     * Populate the child select dropdown.
+     *
+     * When repopulating the list, preserve the previously selected child if it still exists.
+     * Optionally a specific child ID can be passed to force selection of that child.
+     * If no children exist, the UI is reset to default values.
+     *
+     * @param {string} [preferredId] - Optional ID of the child that should be selected.
+     */
+    function updateChildSelect(preferredId){
       const select = el('childSelect');
+      // Remember the currently selected ID before resetting the list
+      const currentId = preferredId || select.value;
+      // Clear current options
       select.innerHTML = '';
+      // Build new options from childrenData
       childrenData.forEach(child => {
         const option = document.createElement('option');
         option.value = child.id;
@@ -696,11 +709,25 @@
         select.appendChild(option);
       });
       if (childrenData.length > 0){
-        select.value = childrenData[0].id;
-        loadChild(select.value);
+        // Try to select the preferred/current child if it still exists
+        let idToSelect = currentId;
+        if (!childrenData.some(c => c.id === idToSelect)){
+          // If it no longer exists (e.g., deleted), fallback to the last child in the list
+          idToSelect = childrenData[childrenData.length - 1].id;
+        }
+        select.value = idToSelect;
+        loadChild(idToSelect);
+        // After loading a child, ensure all summaries are recalculated
+        recalcAll();
       } else {
-        // Reset UI to defaults
-        importDataToUI({ weights: { DE:{sa:40,ans:20,hu:20,mi:20}, MA:{sa:50,lzk:20,hu:15,mi:15} }, rows: { DE:{sa:[],ans:[],hu:[],mi:[]}, MA:{sa:[],lzk:[],hu:[],mi:[]} }, thresholds: thresholds });
+        // No children: reset UI to defaults
+        importDataToUI({
+          weights: { DE:{sa:40,ans:20,hu:20,mi:20}, MA:{sa:50,lzk:20,hu:15,mi:15} },
+          rows: { DE:{sa:[],ans:[],hu:[],mi:[]}, MA:{sa:[],lzk:[],hu:[],mi:[]} },
+          thresholds: thresholds
+        });
+        // Recalculate summaries after resetting to default values
+        recalcAll();
       }
     }
     function loadChild(childId){
@@ -726,7 +753,8 @@
       const defaultData = { weights: { DE:{sa:40,ans:20,hu:20,mi:20}, MA:{sa:50,lzk:20,hu:15,mi:15} }, rows: { DE:{sa:[],ans:[],hu:[],mi:[]}, MA:{sa:[],lzk:[],hu:[],mi:[]} }, thresholds: { ...thresholds } };
       childrenData.push({ id, name, data: defaultData });
       saveToStorage();
-      updateChildSelect();
+      // After adding a new child, update the dropdown and select the newly created profile
+      updateChildSelect(id);
     }
     function deleteChild(){
       const select = el('childSelect');
@@ -967,6 +995,8 @@
       } else {
         updateChildSelect();
       }
+      // Ensure initial summaries are recalculated after loading/creating children
+      recalcAll();
     });
   </script>
   <!-- jsPDF library for PDF export -->
