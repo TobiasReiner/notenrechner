@@ -57,8 +57,15 @@
 <body>
   <!-- Navigation Bar -->
   <nav class="navbar navbar-expand-lg">
-    <div class="container">
+    <div class="container d-flex align-items-center">
+      <!-- App name / logo -->
       <span class="navbar-brand fw-bold"><i class="bi bi-calculator"></i> Notenrechner</span>
+      <!-- Spacer to push the donate button to the right -->
+      <div class="flex-grow-1"></div>
+      <!-- PayPal donate button.  When clicked it opens the PayPal donate page in a new tab. -->
+      <button id="donateBtn" class="btn btn-warning btn-sm" title="Projekt unterstützen">
+        <i class="bi bi-paypal me-1"></i> Spenden
+      </button>
     </div>
   </nav>
   <!-- Main Content -->
@@ -935,6 +942,15 @@
     document.getElementById('tab-overview').addEventListener('shown.bs.tab', () => updateOverviewChart());
     // Add listener for PDF export
     document.getElementById('pdfExportBtn').addEventListener('click', exportPdf);
+
+    // PayPal donate button: open PayPal donate page in new tab when clicked.
+    const donateBtn = document.getElementById('donateBtn');
+    if (donateBtn){
+      donateBtn.addEventListener('click', () => {
+        // Use PayPal donate URL.  The user will authenticate with their PayPal account in the new tab.
+        window.open('https://www.paypal.com/donate', '_blank');
+      });
+    }
     // Initialize on DOMContentLoaded
     document.addEventListener('DOMContentLoaded', () => {
       bindWeightInputs();
