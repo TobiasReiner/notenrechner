@@ -947,8 +947,8 @@
     const donateBtn = document.getElementById('donateBtn');
     if (donateBtn){
       donateBtn.addEventListener('click', () => {
-        // Use PayPal donate URL.  The user will authenticate with their PayPal account in the new tab.
-        window.open('https://www.paypal.com/donate', '_blank');
+        // Open the personal PayPal.me link in a new tab so donations go directly to the user’s account.
+        window.open('https://paypal.me/TobiasReiner793', '_blank');
       });
     }
     // Initialize on DOMContentLoaded
