@@ -1,365 +1,961 @@
 <!DOCTYPE html>
 <html lang="de">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Notenrechner</title>
-    <!-- Chart.js from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-      body {
-        font-family: system-ui, sans-serif;
-        margin: 0;
-        padding: 2rem;
-        background: #f5f5f5;
-      }
-      h1 {
-        margin-bottom: 1rem;
-        text-align: center;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 1rem;
-      }
-      th,
-      td {
-        padding: 0.5rem;
-        border: 1px solid #ccc;
-        text-align: left;
-      }
-      th {
-        background: #e0e0e0;
-      }
-      input[type="number"] {
-        width: 80px;
-      }
-      .chart-container {
-        display: flex;
-        justify-content: space-around;
-        flex-wrap: wrap;
-        gap: 2rem;
-        margin-top: 2rem;
-      }
-      .chart-box {
-        flex: 1 1 300px;
-        max-width: 400px;
-        background: #fff;
-        padding: 1rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      .actions {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-        margin-bottom: 1rem;
-      }
-      button {
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-      button.add {
-        background-color: #4caf50;
-        color: #fff;
-      }
-      button.export {
-        background-color: #2196f3;
-        color: #fff;
-      }
-      button.remove-row {
-        background-color: #f44336;
-        color: #fff;
-      }
-      button.import {
-        background-color: #9c27b0;
-        color: #fff;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Notenrechner</h1>
-    <p>
-      Tragen Sie für jedes Thema/Kapitel die Gesamtpunkte, die erreichten Punkte
-      und das Gewicht ein. Neben der Verteilung der Gewichte wird zusätzlich
-      ein Kreisdiagramm mit den tatsächlich erreichten Prozentwerten angezeigt.
-    </p>
-    <div class="actions">
-      <button class="add" onclick="addRow()">Zeile hinzufügen</button>
-      <button class="export" onclick="exportJson()">JSON exportieren</button>
-      <!-- Neue Schaltfläche zum Exportieren als PDF -->
-      <button class="export" onclick="exportPdf()">PDF exportieren</button>
-      <label style="display: flex; align-items: center; gap: 0.5rem;">
-        <input
-          type="file"
-          id="importFile"
-          accept="application/json"
-          style="display: none"
-          onchange="importJson(event)"
-        />
-        <button class="import" onclick="document.getElementById('importFile').click()">
-          JSON importieren
-        </button>
-      </label>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notenrechner – Offline Version</title>
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --brand:#0d6efd;
+      --brand-light:#e9f2ff;
+      --text-dark:#1a2a4a;
+    }
+    body{
+      background:var(--brand-light);
+      color:var(--text-dark);
+    }
+    .navbar{
+      background-color:#fff;
+      border-bottom:1px solid #e0e4f0;
+    }
+    .card{
+      border:0;
+      box-shadow:0 4px 16px rgba(0,0,0,0.05);
+      border-radius:12px;
+    }
+    .chip{
+      background-color:var(--brand-light);
+      color:var(--brand);
+      border-radius:999px;
+      padding:.4rem .8rem;
+      font-weight:600;
+    }
+    .sum-ok{ color: #198754; }
+    .sum-bad{ color: #dc3545; }
+    .note-pill{
+      font-weight:700;
+      padding:.35rem .7rem;
+      border-radius:999px;
+      display:inline-block;
+    }
+    .note-1{ background:#e6f7e6; color:#0b6630; }
+    .note-2{ background:#e6effb; color:#11468f; }
+    .note-3{ background:#fff7e6; color:#6c5105; }
+    .note-4{ background:#ffeae6; color:#9c2c00; }
+    .note-5{ background:#fde7eb; color:#850c1a; }
+    .table th, .table td{ padding:.35rem .5rem; white-space:nowrap; }
+    .table-responsive{ overflow-x:auto; }
+    canvas{ max-width:100%; height:auto; }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <span class="navbar-brand fw-bold"><i class="bi bi-calculator"></i> Notenrechner</span>
     </div>
-    <table id="gradesTable">
-      <thead>
-        <tr>
-          <th>Thema/Kapitel</th>
-          <th>Erreichte Punkte</th>
-          <th>Gesamtpunkte</th>
-          <th>Gewicht (%)</th>
-          <th>Aktion</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <div class="chart-container">
-      <div class="chart-box">
-        <canvas id="weightChart"></canvas>
+  </nav>
+  <!-- Main Content -->
+  <main class="container my-4 my-md-5">
+    <!-- Child Management and Data Export/Import -->
+    <div class="row mb-4" id="childManagement">
+      <div class="col-lg-8 col-md-7 mb-2 mb-md-0">
+        <label for="childSelect" class="form-label">Kind auswählen:</label>
+        <div class="input-group">
+          <select id="childSelect" class="form-select" aria-label="Kinderauswahl"></select>
+          <button class="btn btn-outline-secondary" id="addChildBtn" title="Kind hinzufügen"><i class="bi bi-plus"></i></button>
+          <button class="btn btn-outline-danger" id="deleteChildBtn" title="Kind löschen"><i class="bi bi-trash"></i></button>
+          <button class="btn btn-primary ms-2" id="saveChildBtn" title="Daten speichern"><i class="bi bi-save me-1"></i> Speichern</button>
+        </div>
       </div>
-      <div class="chart-box">
-        <canvas id="percentChart"></canvas>
+      <div class="col-lg-4 col-md-5 mb-2 mb-md-0">
+        <label class="form-label d-block">Daten sichern:</label>
+        <div class="input-group">
+          <button id="exportBtn" class="btn btn-outline-success">Exportieren</button>
+          <!-- New button for PDF export -->
+          <button id="pdfExportBtn" class="btn btn-outline-primary">PDF Export</button>
+          <label class="btn btn-outline-secondary mb-0">
+            Importieren
+            <input type="file" id="importFile" accept=".json" hidden />
+          </label>
+        </div>
       </div>
     </div>
-    <script>
-      let weightChart;
-      let percentChart;
-
-      function addRow(data = {}) {
-        const tableBody = document.querySelector('#gradesTable tbody');
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td><input type="text" value="${data.name || ''}" placeholder="Bezeichnung" /></td>
-          <td><input type="number" min="0" step="0.01" value="${data.pointsAchieved ?? ''}" /></td>
-          <td><input type="number" min="0" step="0.01" value="${data.pointsTotal ?? ''}" /></td>
-          <td><input type="number" min="0" step="0.01" value="${data.weight ?? ''}" /></td>
-          <td><button class="remove-row" onclick="removeRow(this)">Entfernen</button></td>
-        `;
-        tableBody.appendChild(row);
-        updateCharts();
-        // add event listeners to update chart on input change
-        row.querySelectorAll('input').forEach((input) => {
-          input.addEventListener('input', updateCharts);
-        });
-      }
-
-      function removeRow(btn) {
-        const row = btn.closest('tr');
-        if (row) row.remove();
-        updateCharts();
-      }
-
-      function getDataFromTable() {
-        const rows = document.querySelectorAll('#gradesTable tbody tr');
-        const data = [];
-        rows.forEach((row) => {
-          const cells = row.querySelectorAll('input');
-          const name = cells[0].value.trim();
-          const pointsAchieved = parseFloat(cells[1].value);
-          const pointsTotal = parseFloat(cells[2].value);
-          const weight = parseFloat(cells[3].value);
-          if (!name) return; // skip empty names
-          data.push({ name, pointsAchieved, pointsTotal, weight });
-        });
-        return data;
-      }
-
-      function updateCharts() {
-        const data = getDataFromTable();
-        const labels = data.map((d) => d.name);
-        const weights = data.map((d) => (isNaN(d.weight) ? 0 : d.weight));
-        const percentValues = data.map((d) => {
-          if (isNaN(d.pointsAchieved) || isNaN(d.pointsTotal) || d.pointsTotal === 0) {
-            return 0;
-          }
-          return (d.pointsAchieved / d.pointsTotal) * 100;
-        });
-        // update weight chart
-        if (weightChart) weightChart.destroy();
-        const weightCtx = document.getElementById('weightChart').getContext('2d');
-        weightChart = new Chart(weightCtx, {
-          type: 'pie',
-          data: {
-            labels: labels,
-            datasets: [
-              {
-                data: weights,
-                backgroundColor: generateColors(labels.length),
-              },
-            ],
-          },
-          options: {
-            plugins: {
-              title: {
-                display: true,
-                text: 'Gewichtsverteilung (in %)',
-              },
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    const label = context.label || '';
-                    const value = context.raw;
-                    return `${label}: ${value}%`;
-                  },
-                },
-              },
-            },
-          },
-        });
-        // update percent chart
-        if (percentChart) percentChart.destroy();
-        const percentCtx = document.getElementById('percentChart').getContext('2d');
-        percentChart = new Chart(percentCtx, {
-          type: 'pie',
-          data: {
-            labels: labels,
-            datasets: [
-              {
-                data: percentValues,
-                backgroundColor: generateColors(labels.length),
-              },
-            ],
-          },
-          options: {
-            plugins: {
-              title: {
-                display: true,
-                text: 'Tatsächliche erreichte Prozentwerte',
-              },
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    const label = context.label || '';
-                    const value = context.raw;
-                    return `${label}: ${value.toFixed(2)} %`;
-                  },
-                },
-              },
-            },
-          },
-        });
-      }
-
-      function generateColors(count) {
-        const colors = [];
-        const baseColors = [
-          '#f44336',
-          '#2196f3',
-          '#4caf50',
-          '#ff9800',
-          '#9c27b0',
-          '#03a9f4',
-          '#e91e63',
-          '#8bc34a',
-        ];
-        for (let i = 0; i < count; i++) {
-          colors.push(baseColors[i % baseColors.length]);
+    <!-- Info Chip -->
+    <div class="row g-4">
+      <div class="col-12">
+        <div class="chip"><i class="bi bi-info-circle me-1"></i> Wähle pro Kategorie beliebig viele Zeilen: Punkte, Fehler, Vergessen (HU), Note (1–5), Prozent</div>
+      </div>
+      <!-- Tabs Navigation -->
+      <div class="col-12">
+        <ul class="nav nav-pills" id="fachTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-de" data-bs-toggle="tab" data-bs-target="#pane-de" type="button" role="tab" aria-controls="pane-de" aria-selected="true">Deutsch</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-ma" data-bs-toggle="tab" data-bs-target="#pane-ma" type="button" role="tab" aria-controls="pane-ma" aria-selected="false">Mathematik</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-overview" data-bs-toggle="tab" data-bs-target="#pane-overview" type="button" role="tab" aria-controls="pane-overview" aria-selected="false">Übersicht</button>
+          </li>
+        </ul>
+      </div>
+      <!-- Tab Content -->
+      <div class="col-12 tab-content">
+        <!-- Deutsch Panel -->
+        <div class="tab-pane fade show active" id="pane-de" role="tabpanel" aria-labelledby="tab-de">
+          <div class="row g-4">
+            <div class="col-lg-7">
+              <div class="card p-3 p-md-4">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Gewichtungen (Deutsch)</h5>
+                  <span id="sumDE" class="fw-bold sum-bad">Summe: 0 %</span>
+                </div>
+                <hr>
+                <div class="row g-3">
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">Schularbeit</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wDE_sa" type="number" class="form-control" min="0" max="100" value="40" aria-label="Gewichtung Schularbeit" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">Ansage</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wDE_ans" type="number" class="form-control" min="0" max="100" value="20" aria-label="Gewichtung Ansage" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">Hausübung</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wDE_hu" type="number" class="form-control" min="0" max="100" value="20" aria-label="Gewichtung Hausübung" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">Mitarbeit</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wDE_mi" type="number" class="form-control" min="0" max="100" value="20" aria-label="Gewichtung Mitarbeit" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Leistungen Deutsch -->
+              <div class="card p-3 p-md-4 mt-4">
+                <h5>Leistungen erfassen (Deutsch)</h5>
+                <p class="small text-secondary mb-2">Auch hier beliebig viele Einträge pro Kategorie. Der Durchschnitt wird aus allen Zeilen berechnet.</p>
+                <!-- SA -->
+                <div class="mt-3">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Schularbeiten</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('DE','sa')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblDE_sa" aria-label="Schularbeitstabelle Deutsch">
+                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgDE_sa">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+                <!-- Ansage -->
+                <div class="mt-4">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Ansage</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('DE','ans')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblDE_ans" aria-label="Ansagetabelle Deutsch">
+                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgDE_ans">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+                <!-- HU -->
+                <div class="mt-4">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Hausübung</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('DE','hu','vergessen')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblDE_hu" aria-label="Hausübungstabelle Deutsch">
+                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgDE_hu">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+                <!-- MI -->
+                <div class="mt-4">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Mitarbeit</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('DE','mi','prozent')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblDE_mi" aria-label="Mitarbeitstabelle Deutsch">
+                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgDE_mi">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <!-- Ergebnis Deutsch -->
+              <div class="card p-3 p-md-4 mt-4">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Ergebnis Deutsch</h5>
+                  <span id="gradeDE" class="note-pill note-5">–</span>
+                </div>
+                <hr>
+                <div class="row g-3">
+                  <div class="col-6">
+                    <div class="p-3 bg-white border rounded text-center">
+                      <div class="small text-secondary">Gesamt-%</div>
+                      <div id="totalPctDE" class="display-6">– %</div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="p-3 bg-white border rounded text-center">
+                      <div class="small text-secondary">Gewichtungs-Summe</div>
+                      <div id="sumDEmini" class="h3">0 %</div>
+                    </div>
+                  </div>
+                  <div class="col-12"><canvas id="chartDEweights" height="160"></canvas></div>
+                  <div class="col-12"><canvas id="chartDEcats" height="160"></canvas></div>
+                  <!-- New performance chart for Deutsch -->
+                  <div class="col-12"><canvas id="chartDEperf" height="160"></canvas></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Mathematik Panel -->
+        <div class="tab-pane fade" id="pane-ma" role="tabpanel" aria-labelledby="tab-ma">
+          <div class="row g-4">
+            <div class="col-lg-7">
+              <div class="card p-3 p-md-4">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Gewichtungen (Mathematik)</h5>
+                  <span id="sumMA" class="fw-bold sum-bad">Summe: 0 %</span>
+                </div>
+                <hr>
+                <div class="row g-3">
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">Schularbeiten</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wMA_sa" type="number" class="form-control" min="0" max="100" value="50" aria-label="Gewichtung Schularbeiten" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">LZK</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wMA_lzk" type="number" class="form-control" min="0" max="100" value="20" aria-label="Gewichtung LZK" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">Hausübung</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wMA_hu" type="number" class="form-control" min="0" max="100" value="15" aria-label="Gewichtung Hausübung Mathe" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label small">Mitarbeit</label>
+                    <div class="input-group input-group-sm">
+                      <input id="wMA_mi" type="number" class="form-control" min="0" max="100" value="15" aria-label="Gewichtung Mitarbeit Mathe" />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Leistungen Mathe -->
+              <div class="card p-3 p-md-4 mt-4">
+                <h5>Leistungen erfassen (Mathematik)</h5>
+                <p class="small text-secondary mb-2">Auch hier beliebig viele Einträge pro Kategorie. Der Durchschnitt wird aus allen Zeilen berechnet.</p>
+                <!-- SA -->
+                <div class="mt-3">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Schularbeiten</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('MA','sa')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblMA_sa" aria-label="Schularbeitstabelle Mathe">
+                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgMA_sa">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+                <!-- LZK -->
+                <div class="mt-4">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">LZK</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('MA','lzk')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblMA_lzk" aria-label="LZK Tabelle Mathe">
+                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgMA_lzk">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+                <!-- HU -->
+                <div class="mt-4">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Hausübung</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('MA','hu','vergessen')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblMA_hu" aria-label="Hausübungstabelle Mathe">
+                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgMA_hu">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+                <!-- MI -->
+                <div class="mt-4">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Mitarbeit</h6>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="addRow('MA','mi','prozent')"><i class="bi bi-plus"></i> Zeile</button>
+                  </div>
+                  <div class="table-responsive mt-2">
+                    <table class="table table-sm align-middle" id="tblMA_mi" aria-label="Mitarbeitstabelle Mathe">
+                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <tbody></tbody>
+                      <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgMA_mi">–</span> %</th><th></th></tr></tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <!-- Ergebnis Mathe -->
+              <div class="card p-3 p-md-4 mt-4">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Ergebnis Mathe</h5>
+                  <span id="gradeMA" class="note-pill note-5">–</span>
+                </div>
+                <hr>
+                <div class="row g-3">
+                  <div class="col-6">
+                    <div class="p-3 bg-white border rounded text-center">
+                      <div class="small text-secondary">Gesamt-%</div>
+                      <div id="totalPctMA" class="display-6">– %</div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="p-3 bg-white border rounded text-center">
+                      <div class="small text-secondary">Gewichtungs-Summe</div>
+                      <div id="sumMAmini" class="h3">0 %</div>
+                    </div>
+                  </div>
+                  <div class="col-12"><canvas id="chartMAweights" height="160"></canvas></div>
+                  <div class="col-12"><canvas id="chartMAcats" height="160"></canvas></div>
+                  <!-- New performance chart for Mathe -->
+                  <div class="col-12"><canvas id="chartMAperf" height="160"></canvas></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Übersicht Panel -->
+        <div class="tab-pane fade" id="pane-overview" role="tabpanel" aria-labelledby="tab-overview">
+          <div class="row g-4">
+            <div class="col-12">
+              <div class="card p-3 p-md-4">
+                <h5>Übersicht</h5>
+                <canvas id="overviewChart" height="200"></canvas>
+                <div class="mt-3">
+                  <div class="alert alert-info">
+                    Wenn dir diese App gefällt und du die Entwicklung unterstützen möchtest, freuen wir uns über eine Spende!
+                    <a href="#spendenlink" target="_blank">Spenden-Link</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- End of tab-content -->
+      <div class="mt-4">
+        <div class="chip">
+          <i class="bi bi-question-circle"></i> Punkte: <em>erzielt / maximal</em> · Fehler: <em>Fehler / Gesamtaufgaben</em> · Vergessen (HU): <em>vergessen / vergebene</em> · Note 1–5 → Prozent (über Schwellen)
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- Bewertungsschwellen Modal -->
+  <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Bewertungsschwellen (Notenskala)</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+        </div>
+        <div class="modal-body">
+          <p class="small text-secondary mb-2">Passe hier die Grenze (in Prozent) an, ab der die jeweilige Note erreicht wird. Unterhalb der Note-4-Grenze ist die Note 5.</p>
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label small">Note 1 ab (%)</label>
+              <input id="thr1" type="number" min="0" max="100" value="90" class="form-control" />
+            </div>
+            <div class="col-6">
+              <label class="form-label small">Note 2 ab (%)</label>
+              <input id="thr2" type="number" min="0" max="100" value="80" class="form-control" />
+            </div>
+            <div class="col-6">
+              <label class="form-label small">Note 3 ab (%)</label>
+              <input id="thr3" type="number" min="0" max="100" value="65" class="form-control" />
+            </div>
+            <div class="col-6">
+              <label class="form-label small">Note 4 ab (%)</label>
+              <input id="thr4" type="number" min="0" max="100" value="50" class="form-control" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" data-bs-dismiss="modal" onclick="recalcAll()">Übernehmen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Row Template for dynamic rows -->
+  <template id="rowTemplate">
+    <tr>
+      <td>
+        <select class="form-select form-select-sm typeSel">
+          <option value="punkte">Punkte</option>
+          <option value="fehler">Fehler</option>
+          <option value="vergessen">Vergessen (HU)</option>
+          <option value="note">Note (1–5)</option>
+          <option value="prozent">Prozent</option>
+        </select>
+      </td>
+      <td class="text-end"><input type="number" class="form-control form-control-sm valA" placeholder="…"></td>
+      <td class="text-end"><input type="number" class="form-control form-control-sm valB" placeholder="…"></td>
+      <td class="text-end fw-semibold"><span class="pct">–</span> %</td>
+      <td class="text-end"><button class="btn btn-sm btn-outline-danger" title="Zeile entfernen"><i class="bi bi-trash"></i></button></td>
+    </tr>
+  </template>
+  <!-- JavaScript for functionality -->
+  <script>
+    // Utility functions
+    const el = id => document.getElementById(id);
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    const f2 = n => (isFinite(n) ? n.toFixed(1) : '–');
+    // Thresholds for grades
+    const thresholds = { n1:90, n2:80, n3:65, n4:50 };
+    function pct2note(p){
+      if (!isFinite(p)) return 5;
+      if (p >= thresholds.n1) return 1;
+      if (p >= thresholds.n2) return 2;
+      if (p >= thresholds.n3) return 3;
+      if (p >= thresholds.n4) return 4;
+      return 5;
+    }
+    function noteClass(n){ return `note-${clamp(n,1,5)}`; }
+    // Convert row values to percentage
+    function rowToPercent(type, a, b){
+      const x = parseFloat(a), y = parseFloat(b);
+      switch(type){
+        case 'punkte': return (y > 0) ? clamp(100 * x / y, 0, 100) : NaN;
+        case 'fehler': return (y > 0) ? clamp(100 * (1 - x / y), 0, 100) : NaN;
+        case 'vergessen': return (y > 0) ? clamp(100 * (1 - x / y), 0, 100) : NaN;
+        case 'note': {
+          const n = clamp(Math.round(x),1,5);
+          const map = {
+            1:(thresholds.n1+100)/2,
+            2:(thresholds.n2+thresholds.n1)/2,
+            3:(thresholds.n3+thresholds.n2)/2,
+            4:(thresholds.n4+thresholds.n3)/2,
+            5:(0+thresholds.n4)/2
+          };
+          return clamp(map[n] || NaN, 0, 100);
         }
-        return colors;
+        case 'prozent': return clamp(x, 0, 100);
       }
-
-      function exportJson() {
-        const data = getDataFromTable();
-        const jsonString = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        const dateStr = new Date().toISOString().split('T')[0];
-        link.download = `notenrechner_${dateStr}.json`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
+      return NaN;
+    }
+    // Add a new row to a category
+    function addRow(fach, cat, preferredType){
+      const table = el(`tbl${fach}_${cat}`).querySelector('tbody');
+      const tpl = document.getElementById('rowTemplate').content.cloneNode(true);
+      const tr = tpl.querySelector('tr');
+      const typeSel = tr.querySelector('.typeSel');
+      const valA = tr.querySelector('.valA');
+      const valB = tr.querySelector('.valB');
+      const pctSpan = tr.querySelector('.pct');
+      const delBtn = tr.querySelector('button');
+      if (preferredType){ typeSel.value = preferredType; }
+      function adaptInputs(){
+        const t = typeSel.value;
+        valA.disabled = false;
+        valB.disabled = false;
+        if (t === 'punkte') { valA.placeholder = 'erzielt'; valB.placeholder = 'max.'; }
+        else if (t === 'fehler') { valA.placeholder = 'Fehler'; valB.placeholder = 'gesamt'; }
+        else if (t === 'vergessen') { valA.placeholder = 'vergessen'; valB.placeholder = 'vergeben'; }
+        else if (t === 'note') { valA.placeholder = '1–5'; valB.value = ''; valB.placeholder = '—'; valB.disabled = true; }
+        else if (t === 'prozent') { valA.placeholder = '%'; valB.value = ''; valB.placeholder = '—'; valB.disabled = true; }
+        compute();
       }
-
-      /**
-       * Exportiert die aktuellen Daten und Diagramme als PDF.
-       * Hierfür wird die Bibliothek jsPDF genutzt, die unter window.jspdf verfügbar ist.
-       */
-      function exportPdf() {
-        const data = getDataFromTable();
-        if (!window.jspdf) {
-          alert('Fehler: jsPDF konnte nicht geladen werden.');
-          return;
+      function compute(){
+        const t = typeSel.value;
+        const p = rowToPercent(t, valA.value, valB.value);
+        pctSpan.textContent = isFinite(p) ? f2(p) : '–';
+        recalcAll();
+      }
+      typeSel.addEventListener('change', adaptInputs);
+      [valA, valB].forEach(x => x.addEventListener('input', compute));
+      delBtn.addEventListener('click', () => { tr.remove(); recalcAll(); });
+      table.appendChild(tr);
+      adaptInputs();
+    }
+    // Read weight values
+    function readWeights(f){
+      if (f === 'DE'){
+        return { sa: parseFloat(el('wDE_sa').value) || 0, ans: parseFloat(el('wDE_ans').value) || 0, hu: parseFloat(el('wDE_hu').value) || 0, mi: parseFloat(el('wDE_mi').value) || 0 };
+      } else {
+        return { sa: parseFloat(el('wMA_sa').value) || 0, lzk: parseFloat(el('wMA_lzk').value) || 0, hu: parseFloat(el('wMA_hu').value) || 0, mi: parseFloat(el('wMA_mi').value) || 0 };
+      }
+    }
+    // Compute category average
+    function catAvg(f, cat){
+      const rows = el(`tbl${f}_${cat}`).querySelectorAll('tbody tr');
+      let sum = 0, n = 0;
+      rows.forEach(r => {
+        const t = r.querySelector('.typeSel').value;
+        const a = r.querySelector('.valA').value;
+        const b = r.querySelector('.valB').value;
+        const p = rowToPercent(t, a, b);
+        if (isFinite(p)){ sum += p; n++; }
+      });
+      const avg = n ? sum / n : NaN;
+      el(`avg${f}_${cat}`).textContent = isFinite(avg) ? f2(avg) : '–';
+      return avg;
+    }
+    // Compute weighted total and sum of weights
+    function weightedTotal(f, weights, cats){
+      let wsum = 0, acc = 0;
+      cats.forEach(cat => {
+        const w = Number(weights[cat]) || 0;
+        const avg = catAvg(f, cat);
+        if (isFinite(avg) && w > 0){ acc += avg * (w / 100); }
+        wsum += w;
+      });
+      return { total: (wsum === 100 ? acc : NaN), wsum, partial: acc };
+    }
+    // Chart instances
+    const charts = { DE:{ w:null, c:null, p:null }, MA:{ w:null, c:null, p:null } };
+    // Update the weight, category and performance charts
+    function updateCharts(f, weights, cats){
+      const wCanvas = el(f === 'DE' ? 'chartDEweights' : 'chartMAweights');
+      const cCanvas = el(f === 'DE' ? 'chartDEcats' : 'chartMAcats');
+      const pCanvas = el(f === 'DE' ? 'chartDEperf' : 'chartMAperf');
+      const labels = cats.map(k => ({ sa:'Schularbeit(en)', ans:'Ansage', hu:'Hausübung', mi:'Mitarbeit', lzk:'LZK' })[k]);
+      const weightVals = cats.map(k => Number(weights[k]) || 0);
+      const catVals = cats.map(k => {
+        const t = el(`avg${f}_${k}`).textContent.replace(',', '.');
+        const num = parseFloat(t);
+        return isFinite(num) ? num : 0;
+      });
+      // Weights chart
+      if (charts[f].w) charts[f].w.destroy();
+      charts[f].w = new Chart(wCanvas, {
+        type:'doughnut',
+        data:{ labels, datasets:[{ data: weightVals, backgroundColor:['#0d6efd','#0dcaf0','#ffc107','#198754'] }] },
+        options:{ plugins:{ legend:{ position:'bottom' }, title:{ display:true, text:'Gewichtungs-Verteilung (%)' } }, cutout:'60%' }
+      });
+      // Category averages bar chart
+      if (charts[f].c) charts[f].c.destroy();
+      charts[f].c = new Chart(cCanvas, {
+        type:'bar',
+        data:{ labels, datasets:[{ label:'Kategorie-Ø (%)', data: catVals, backgroundColor:'#0d6efd' }] },
+        options:{ plugins:{ legend:{ display:false }, title:{ display:true, text:'Kategorien-Durchschnitte' } }, scales:{ y:{ beginAtZero:true, max:100 } } }
+      });
+      // Performance chart (doughnut of category averages)
+      if (charts[f].p) charts[f].p.destroy();
+      charts[f].p = new Chart(pCanvas, {
+        type:'doughnut',
+        data:{ labels, datasets:[{ data: catVals, backgroundColor:['#0d6efd','#0dcaf0','#ffc107','#198754'] }] },
+        options:{ plugins:{ legend:{ position:'bottom' }, title:{ display:true, text:'Kategorie-Durchschnitt (%)' } }, cutout:'60%' }
+      });
+    }
+    // Update summary and charts for a subject
+    function updateSummary(f){
+      const weights = readWeights(f);
+      const cats = f === 'DE' ? ['sa','ans','hu','mi'] : ['sa','lzk','hu','mi'];
+      // Weight sum
+      const sum = Object.values(weights).reduce((a,b) => a + (Number(b) || 0), 0);
+      const sumEl = el(f === 'DE' ? 'sumDE' : 'sumMA');
+      const miniEl = el(f === 'DE' ? 'sumDEmini' : 'sumMAmini');
+      sumEl.textContent = `Summe: ${sum} %`;
+      miniEl.textContent = `${sum} %`;
+      sumEl.classList.toggle('sum-ok', sum === 100);
+      sumEl.classList.toggle('sum-bad', sum !== 100);
+      // Totals
+      const { total, wsum, partial } = weightedTotal(f, weights, cats);
+      const totalPctEl = el(f === 'DE' ? 'totalPctDE' : 'totalPctMA');
+      const gradeEl = el(f === 'DE' ? 'gradeDE' : 'gradeMA');
+      const pct = (wsum === 100) ? partial : NaN;
+      totalPctEl.textContent = isFinite(pct) ? `${f2(pct)} %` : '– %';
+      const note = isFinite(pct) ? pct2note(pct) : 5;
+      gradeEl.className = `note-pill ${noteClass(note)}`;
+      gradeEl.textContent = isFinite(pct) ? `Note ${note}` : '–';
+      // Update charts
+      updateCharts(f, weights, cats);
+    }
+    // Recalculate all summaries
+    function recalcAll(){
+      thresholds.n1 = parseFloat(el('thr1').value) || thresholds.n1;
+      thresholds.n2 = parseFloat(el('thr2').value) || thresholds.n2;
+      thresholds.n3 = parseFloat(el('thr3').value) || thresholds.n3;
+      thresholds.n4 = parseFloat(el('thr4').value) || thresholds.n4;
+      updateSummary('DE');
+      updateSummary('MA');
+    }
+    // Bind weight input events
+    function bindWeightInputs(){
+      ['wDE_sa','wDE_ans','wDE_hu','wDE_mi','wMA_sa','wMA_lzk','wMA_hu','wMA_mi'].forEach(id => {
+        el(id).addEventListener('input', recalcAll);
+      });
+    }
+    // Seed initial rows for demonstration
+    function seedRows(){
+      // Deutsch
+      addRow('DE','sa','punkte');
+      addRow('DE','ans','punkte');
+      addRow('DE','hu','vergessen');
+      addRow('DE','mi','prozent');
+      // Mathe
+      addRow('MA','sa','punkte');
+      addRow('MA','lzk','fehler');
+      addRow('MA','hu','vergessen');
+      addRow('MA','mi','prozent');
+      // Fill sample values
+      const fill = (tblId,a,b) => {
+        const row = document.querySelector(`#${tblId} tbody tr`);
+        if (row){
+          row.querySelector('.valA').value = a;
+          const vb = row.querySelector('.valB');
+          if (!vb.disabled) vb.value = b;
         }
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        // Titel
-        doc.setFontSize(16);
-        doc.text('Notenrechner Übersicht', 10, 10);
-        // Datenliste
-        let y = 20;
-        doc.setFontSize(12);
-        data.forEach((item) => {
-          const percent =
-            isNaN(item.pointsAchieved) || isNaN(item.pointsTotal) || item.pointsTotal === 0
-              ? 0
-              : ((item.pointsAchieved / item.pointsTotal) * 100).toFixed(2);
-          const line = `${item.name}: ${item.pointsAchieved} / ${item.pointsTotal} Punkte ( ${percent}% ), Gewicht: ${item.weight}%`;
-          doc.text(line, 10, y);
-          y += 7;
-          // Falls die Seite voll ist, neue Seite
-          if (y > 280) {
-            doc.addPage();
-            y = 20;
-          }
-        });
-        // Diagramme auf neuen Seiten
-        const weightImg = weightChart.toBase64Image();
-        const percentImg = percentChart.toBase64Image();
-        doc.addPage();
-        doc.setFontSize(14);
-        doc.text('Gewichtsverteilung (in %)', 10, 10);
-        // Fügt das Kreisdiagramm hinzu und skaliert es auf 180 mm Breite
-        doc.addImage(weightImg, 'PNG', 10, 20, 180, 90);
-        doc.addPage();
-        doc.text('Tatsächlich erreichte Prozentwerte', 10, 10);
-        doc.addImage(percentImg, 'PNG', 10, 20, 180, 90);
-        doc.save('notenrechner.pdf');
+      };
+      fill('tblDE_sa',45,50);
+      fill('tblDE_ans',18,20);
+      fill('tblDE_hu',1,10);
+      fill('tblDE_mi',85,0);
+      fill('tblMA_sa',40,50);
+      document.querySelector('#tblMA_lzk tbody tr .typeSel').value='fehler';
+      fill('tblMA_lzk',3,20);
+      fill('tblMA_hu',2,10);
+      fill('tblMA_mi',90,0);
+      recalcAll();
+    }
+    // -------- Local Storage & Child Management --------
+    let childrenData = [];
+    const storageKey = 'notenrechner_children';
+    function loadFromStorage(){
+      try {
+        const s = localStorage.getItem(storageKey);
+        if (s){ childrenData = JSON.parse(s); }
+        else { childrenData = []; }
+      } catch (e){ childrenData = []; }
+    }
+    function saveToStorage(){
+      localStorage.setItem(storageKey, JSON.stringify(childrenData));
+    }
+    function generateId(){
+      return Date.now().toString(36) + Math.random().toString(36).substr(2,5);
+    }
+    function updateChildSelect(){
+      const select = el('childSelect');
+      select.innerHTML = '';
+      childrenData.forEach(child => {
+        const option = document.createElement('option');
+        option.value = child.id;
+        option.textContent = child.name;
+        select.appendChild(option);
+      });
+      if (childrenData.length > 0){
+        select.value = childrenData[0].id;
+        loadChild(select.value);
+      } else {
+        // Reset UI to defaults
+        importDataToUI({ weights: { DE:{sa:40,ans:20,hu:20,mi:20}, MA:{sa:50,lzk:20,hu:15,mi:15} }, rows: { DE:{sa:[],ans:[],hu:[],mi:[]}, MA:{sa:[],lzk:[],hu:[],mi:[]} }, thresholds: thresholds });
       }
-
-      function importJson(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          try {
-            const json = JSON.parse(e.target.result);
-            // Clear existing rows
-            document.querySelector('#gradesTable tbody').innerHTML = '';
-            // Validate and add rows
-            if (Array.isArray(json)) {
-              json.forEach((item) => {
-                if (item && typeof item === 'object') {
-                  addRow({
-                    name: item.name || '',
-                    pointsAchieved: item.pointsAchieved ?? '',
-                    pointsTotal: item.pointsTotal ?? '',
-                    weight: item.weight ?? '',
-                  });
-                }
-              });
-            } else {
-              alert('JSON-Format ungültig. Erwartet wird ein Array von Objekten.');
+    }
+    function loadChild(childId){
+      const child = childrenData.find(c => c.id === childId);
+      if (child && child.data){
+        importDataToUI(child.data);
+      }
+    }
+    function saveCurrentChild(){
+      const select = el('childSelect');
+      const id = select.value;
+      if (!id){ alert('Kein Kind ausgewählt.'); return; }
+      const child = childrenData.find(c => c.id === id);
+      if (!child) return;
+      child.data = exportDataFromUI();
+      saveToStorage();
+      alert('Daten gespeichert');
+    }
+    function addChild(){
+      const name = prompt('Name des Kindes:');
+      if (!name) return;
+      const id = generateId();
+      const defaultData = { weights: { DE:{sa:40,ans:20,hu:20,mi:20}, MA:{sa:50,lzk:20,hu:15,mi:15} }, rows: { DE:{sa:[],ans:[],hu:[],mi:[]}, MA:{sa:[],lzk:[],hu:[],mi:[]} }, thresholds: { ...thresholds } };
+      childrenData.push({ id, name, data: defaultData });
+      saveToStorage();
+      updateChildSelect();
+    }
+    function deleteChild(){
+      const select = el('childSelect');
+      const id = select.value;
+      if (!id){ alert('Kein Kind ausgewählt.'); return; }
+      if (!confirm('Soll dieses Kindprofil gelöscht werden?')) return;
+      childrenData = childrenData.filter(c => c.id !== id);
+      saveToStorage();
+      updateChildSelect();
+    }
+    // Export and import
+    function exportAll(){
+      // prettier JSON export
+      const dataStr = JSON.stringify(childrenData, null, 2);
+      const blob = new Blob([dataStr], { type:'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'notenrechner_backup.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    function importAll(evt){
+      const file = evt.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(){
+        try {
+          const imported = JSON.parse(reader.result);
+          if (Array.isArray(imported)){
+            if (confirm('Die existierenden Daten werden ersetzt. Fortfahren?')){
+              childrenData = imported;
+              saveToStorage();
+              updateChildSelect();
             }
-          } catch (err) {
-            alert('Fehler beim Parsen der JSON-Datei: ' + err.message);
+          } else {
+            alert('Ungültige Datei');
           }
-          // reset file input so the same file can be selected again
-          event.target.value = '';
-          updateCharts();
-        };
-        reader.readAsText(file);
+        } catch (e){ alert('Fehler beim Import: ' + e.message); }
+      };
+      reader.readAsText(file);
+      evt.target.value = '';
+    }
+    // Overview chart
+    let overviewChart;
+    function updateOverviewChart(){
+      const labels = childrenData.map(c => c.name);
+      const dataDE = [];
+      const dataMA = [];
+      childrenData.forEach(c => {
+        const { weights, rows } = c.data || {};
+        function calcTotal(f){
+          const w = weights?.[f] || {};
+          const cats = f === 'DE' ? ['sa','ans','hu','mi'] : ['sa','lzk','hu','mi'];
+          let sumW = 0, acc = 0;
+          cats.forEach(cat => {
+            const weight = Number(w[cat]) || 0;
+            const list = rows?.[f]?.[cat] || [];
+            let sum = 0, n = 0;
+            list.forEach(r => {
+              const p = rowToPercent(r.type, r.a, r.b);
+              if (isFinite(p)){ sum += p; n++; }
+            });
+            const avg = n ? sum/n : NaN;
+            if (isFinite(avg) && weight > 0){ acc += avg * (weight/100); }
+            sumW += weight;
+          });
+          return sumW === 100 ? acc : NaN;
+        }
+        const pDE = calcTotal('DE');
+        const pMA = calcTotal('MA');
+        dataDE.push(isFinite(pDE) ? parseFloat(pDE.toFixed(1)) : null);
+        dataMA.push(isFinite(pMA) ? parseFloat(pMA.toFixed(1)) : null);
+      });
+      const ctx = document.getElementById('overviewChart').getContext('2d');
+      if (overviewChart) overviewChart.destroy();
+      overviewChart = new Chart(ctx, {
+        type:'bar',
+        data:{ labels, datasets:[ { label:'Deutsch (%)', data: dataDE }, { label:'Mathe (%)', data: dataMA } ] },
+        options:{ scales:{ y:{ beginAtZero:true, max:100 } }, plugins:{ title:{ display:true, text:'Gesamt-Prozent je Fach pro Kind' } } }
+      });
+    }
+    // Export data from UI
+    function exportDataFromUI(){
+      const weights = {
+        DE: { sa: parseFloat(el('wDE_sa').value)||0, ans: parseFloat(el('wDE_ans').value)||0, hu: parseFloat(el('wDE_hu').value)||0, mi: parseFloat(el('wDE_mi').value)||0 },
+        MA: { sa: parseFloat(el('wMA_sa').value)||0, lzk: parseFloat(el('wMA_lzk').value)||0, hu: parseFloat(el('wMA_hu').value)||0, mi: parseFloat(el('wMA_mi').value)||0 }
+      };
+      function getRows(f,cat){
+        const rows = [];
+        document.querySelectorAll(`#tbl${f}_${cat} tbody tr`).forEach(r => {
+          const type = r.querySelector('.typeSel').value;
+          const a = r.querySelector('.valA').value || '';
+          const b = r.querySelector('.valB').value || '';
+          rows.push({ type, a, b });
+        });
+        return rows;
       }
-
-      // Initial row
-      addRow();
-    </script>
-    <!-- jsPDF zur Erstellung von PDFs -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  </body>
+      const rows = {
+        DE: { sa: getRows('DE','sa'), ans: getRows('DE','ans'), hu: getRows('DE','hu'), mi: getRows('DE','mi') },
+        MA: { sa: getRows('MA','sa'), lzk: getRows('MA','lzk'), hu: getRows('MA','hu'), mi: getRows('MA','mi') }
+      };
+      const thrs = { n1: parseFloat(el('thr1').value)||thresholds.n1, n2: parseFloat(el('thr2').value)||thresholds.n2, n3: parseFloat(el('thr3').value)||thresholds.n3, n4: parseFloat(el('thr4').value)||thresholds.n4 };
+      return { weights, rows, thresholds: thrs };
+    }
+    // Import data into UI
+    function importDataToUI(data){
+      const wDE = data.weights?.DE || {};
+      const wMA = data.weights?.MA || {};
+      if (wDE){ ['sa','ans','hu','mi'].forEach(k => { if (wDE[k] !== undefined) el('wDE_'+k).value = wDE[k]; }); }
+      if (wMA){ ['sa','lzk','hu','mi'].forEach(k => { if (wMA[k] !== undefined) el('wMA_'+k).value = wMA[k]; }); }
+      // Clear existing rows
+      ['DE_sa','DE_ans','DE_hu','DE_mi','MA_sa','MA_lzk','MA_hu','MA_mi'].forEach(id => {
+        const tbody = document.querySelector(`#${id} tbody`);
+        tbody.innerHTML = '';
+      });
+      // Add rows
+      function addRows(f,cat,list){
+        list.forEach(r => {
+          addRow(f,cat);
+          const lastRow = document.querySelector(`#tbl${f}_${cat} tbody tr:last-child`);
+          lastRow.querySelector('.typeSel').value = r.type;
+          const valA = lastRow.querySelector('.valA');
+          const valB = lastRow.querySelector('.valB');
+          valA.value = r.a;
+          if (!valB.disabled) valB.value = r.b;
+          lastRow.querySelector('.typeSel').dispatchEvent(new Event('change'));
+          valA.dispatchEvent(new Event('input'));
+          valB.dispatchEvent(new Event('input'));
+        });
+      }
+      const rowsDE = data.rows?.DE || {};
+      const rowsMA = data.rows?.MA || {};
+      addRows('DE','sa', rowsDE.sa || []);
+      addRows('DE','ans', rowsDE.ans || []);
+      addRows('DE','hu', rowsDE.hu || []);
+      addRows('DE','mi', rowsDE.mi || []);
+      addRows('MA','sa', rowsMA.sa || []);
+      addRows('MA','lzk', rowsMA.lzk || []);
+      addRows('MA','hu', rowsMA.hu || []);
+      addRows('MA','mi', rowsMA.mi || []);
+      // Thresholds
+      const thrs = data.thresholds || {};
+      if (thrs.n1 !== undefined) el('thr1').value = thrs.n1;
+      if (thrs.n2 !== undefined) el('thr2').value = thrs.n2;
+      if (thrs.n3 !== undefined) el('thr3').value = thrs.n3;
+      if (thrs.n4 !== undefined) el('thr4').value = thrs.n4;
+      recalcAll();
+    }
+    // PDF export function
+    async function exportPdf(){
+      // create a PDF for the currently selected child
+      if (!window.jspdf) {
+        alert('Fehler: jsPDF konnte nicht geladen werden.');
+        return;
+      }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      // Title
+      doc.setFontSize(16);
+      doc.text('Notenrechner – Übersicht', 10, 10);
+      let y = 20;
+      const childSelect = el('childSelect');
+      const selectedChild = childrenData.find(c => c.id === childSelect.value);
+      if (selectedChild){
+        doc.setFontSize(14);
+        doc.text(`Kind: ${selectedChild.name}`, 10, y);
+        y += 8;
+        // Summaries for each subject
+        ['DE','MA'].forEach(f => {
+          const subjectName = f === 'DE' ? 'Deutsch' : 'Mathematik';
+          doc.setFontSize(14);
+          doc.text(subjectName, 10, y);
+          y += 6;
+          // list category averages
+          const cats = f === 'DE' ? ['sa','ans','hu','mi'] : ['sa','lzk','hu','mi'];
+          cats.forEach(cat => {
+            const label = ({ sa:'Schularbeiten', ans:'Ansage', hu:'Hausübung', mi:'Mitarbeit', lzk:'LZK' })[cat];
+            const avgEl = el(`avg${f}_${cat}`);
+            const val = avgEl ? avgEl.textContent : '–';
+            doc.setFontSize(12);
+            doc.text(`${label}: ${val} %`, 12, y);
+            y += 5;
+            if (y > 270) { doc.addPage(); y = 20; }
+          });
+          // Add performance and weight charts as images
+          const wChart = charts[f].w;
+          const pChart = charts[f].p;
+          if (wChart && pChart){
+            // convert canvas to PNG
+            const wImg = wChart.toBase64Image();
+            const pImg = pChart.toBase64Image();
+            doc.addPage();
+            doc.setFontSize(14);
+            doc.text(`${subjectName} – Gewichtungsverteilung`, 10, 10);
+            doc.addImage(wImg, 'PNG', 10, 20, 180, 90);
+            doc.addPage();
+            doc.text(`${subjectName} – Kategorie-Durchschnitte`, 10, 10);
+            doc.addImage(pImg, 'PNG', 10, 20, 180, 90);
+          }
+        });
+      }
+      // Save PDF
+      doc.save('notenrechner.pdf');
+    }
+    // Export/import event handlers
+    document.getElementById('exportBtn').addEventListener('click', exportAll);
+    document.getElementById('importFile').addEventListener('change', importAll);
+    document.getElementById('addChildBtn').addEventListener('click', addChild);
+    document.getElementById('deleteChildBtn').addEventListener('click', deleteChild);
+    document.getElementById('saveChildBtn').addEventListener('click', saveCurrentChild);
+    document.getElementById('childSelect').addEventListener('change', e => loadChild(e.target.value));
+    document.getElementById('tab-overview').addEventListener('shown.bs.tab', () => updateOverviewChart());
+    // Add listener for PDF export
+    document.getElementById('pdfExportBtn').addEventListener('click', exportPdf);
+    // Initialize on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+      bindWeightInputs();
+      loadFromStorage();
+      if (childrenData.length === 0){
+        // create sample child and seed rows
+        const id = generateId();
+        const sampleData = { weights: { DE:{sa:40,ans:20,hu:20,mi:20}, MA:{sa:50,lzk:20,hu:15,mi:15} }, rows: { DE:{sa:[],ans:[],hu:[],mi:[]}, MA:{sa:[],lzk:[],hu:[],mi:[]} }, thresholds: { ...thresholds } };
+        childrenData.push({ id, name:'Beispiel', data: sampleData });
+        saveToStorage();
+        // Seed UI rows with demo values
+        updateChildSelect();
+        seedRows();
+      } else {
+        updateChildSelect();
+      }
+    });
+  </script>
+  <!-- jsPDF library for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 </html>
