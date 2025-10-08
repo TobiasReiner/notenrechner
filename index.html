@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Notenrechner – Offline Version</title>
+  <title>Notenrechner – Deutsch &amp; Mathe</title>
   <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Icons -->
@@ -11,6 +11,7 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
+    /* Klare, kontrastreiche Farbschemata */
     :root{
       --brand:#0d6efd;
       --brand-light:#e9f2ff;
@@ -55,51 +56,24 @@
   </style>
 </head>
 <body>
-  <!-- Navigation Bar -->
   <nav class="navbar navbar-expand-lg">
-    <div class="container d-flex align-items-center">
-      <!-- App name / logo -->
-      <span class="navbar-brand fw-bold"><i class="bi bi-calculator"></i> Notenrechner</span>
-      <!-- Spacer to push the donate button to the right -->
-      <div class="flex-grow-1"></div>
-      <!-- PayPal donate button.  When clicked it opens the PayPal donate page in a new tab. -->
-      <button id="donateBtn" class="btn btn-warning btn-sm" title="Projekt unterstützen">
-        <i class="bi bi-paypal me-1"></i> Spenden
-      </button>
+    <div class="container">
+      <a class="navbar-brand fw-bold"><i class="bi bi-calculator"></i> Notenrechner</a>
+      <div class="d-flex ms-auto align-items-center">
+        <a id="paypalDonate" href="https://paypal.me/TobiasReiner793" target="_blank" rel="noopener" aria-label="Spenden an Tobias Reiner" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1">
+          <i class="bi bi-paypal"></i>
+          <span class="small">Spenden</span>
+        </a>
+      </div>
     </div>
   </nav>
-  <!-- Main Content -->
+
   <main class="container my-4 my-md-5">
-    <!-- Child Management and Data Export/Import -->
-    <div class="row mb-4" id="childManagement">
-      <div class="col-lg-8 col-md-7 mb-2 mb-md-0">
-        <label for="childSelect" class="form-label">Kind auswählen:</label>
-        <div class="input-group">
-          <select id="childSelect" class="form-select" aria-label="Kinderauswahl"></select>
-          <button class="btn btn-outline-secondary" id="addChildBtn" title="Kind hinzufügen"><i class="bi bi-plus"></i></button>
-          <button class="btn btn-outline-danger" id="deleteChildBtn" title="Kind löschen"><i class="bi bi-trash"></i></button>
-          <button class="btn btn-primary ms-2" id="saveChildBtn" title="Daten speichern"><i class="bi bi-save me-1"></i> Speichern</button>
-        </div>
-      </div>
-      <div class="col-lg-4 col-md-5 mb-2 mb-md-0">
-        <label class="form-label d-block">Daten sichern:</label>
-        <div class="input-group">
-          <button id="exportBtn" class="btn btn-outline-success">Exportieren</button>
-          <!-- New button for PDF export -->
-          <button id="pdfExportBtn" class="btn btn-outline-primary">PDF Export</button>
-          <label class="btn btn-outline-secondary mb-0">
-            Importieren
-            <input type="file" id="importFile" accept=".json" hidden />
-          </label>
-        </div>
-      </div>
-    </div>
-    <!-- Info Chip -->
     <div class="row g-4">
       <div class="col-12">
         <div class="chip"><i class="bi bi-info-circle me-1"></i> Wähle pro Kategorie beliebig viele Zeilen: Punkte, Fehler, Vergessen (HU), Note (1–5), Prozent</div>
       </div>
-      <!-- Tabs Navigation -->
+      <!-- Tabs -->
       <div class="col-12">
         <ul class="nav nav-pills" id="fachTabs" role="tablist">
           <li class="nav-item" role="presentation">
@@ -108,17 +82,24 @@
           <li class="nav-item" role="presentation">
             <button class="nav-link" id="tab-ma" data-bs-toggle="tab" data-bs-target="#pane-ma" type="button" role="tab" aria-controls="pane-ma" aria-selected="false">Mathematik</button>
           </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-overview" data-bs-toggle="tab" data-bs-target="#pane-overview" type="button" role="tab" aria-controls="pane-overview" aria-selected="false">Übersicht</button>
-          </li>
         </ul>
       </div>
-      <!-- Tab Content -->
       <div class="col-12 tab-content">
-        <!-- Deutsch Panel -->
+        <!-- Deutsch-Panel -->
         <div class="tab-pane fade show active" id="pane-de" role="tabpanel" aria-labelledby="tab-de">
           <div class="row g-4">
-            <div class="col-lg-7">
+                <div class="col-12 mb-2">
+                  <div class="d-flex gap-2 align-items-center">
+                    <label class="mb-0 small fw-semibold">Schüler:</label>
+                    <select id="childSelect" class="form-select form-select-sm" style="width:220px"></select>
+                    <input id="childNameInput" class="form-control form-control-sm" style="max-width:220px" placeholder="Neuer Schülername" />
+                    <button id="btnAddChild" type="button" class="btn btn-sm btn-outline-primary">Hinzufügen</button>
+                    <button id="btnSaveChild" type="button" class="btn btn-sm btn-outline-success">Speichern</button>
+                    <button id="btnDelChild" type="button" class="btn btn-sm btn-outline-danger">Löschen</button>
+                  </div>
+                </div>
+                <div class="col-lg-7">
+              <!-- Gewichtungen -->
               <div class="card p-3 p-md-4">
                 <div class="d-flex justify-content-between align-items-center">
                   <h5 class="mb-0">Gewichtungen (Deutsch)</h5>
@@ -159,16 +140,18 @@
               <!-- Leistungen Deutsch -->
               <div class="card p-3 p-md-4 mt-4">
                 <h5>Leistungen erfassen (Deutsch)</h5>
-                <p class="small text-secondary mb-2">Auch hier beliebig viele Einträge pro Kategorie. Der Durchschnitt wird aus allen Zeilen berechnet.</p>
-                <!-- SA -->
+                <p class="small text-secondary mb-2">Füge Zeilen hinzu, um die Ergebnisse pro Kategorie einzutragen. Der Durchschnitt wird automatisch berechnet.</p>
+                <!-- Schularbeit -->
                 <div class="mt-3">
                   <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0">Schularbeiten</h6>
+                    <h6 class="mb-0">Schularbeit</h6>
                     <button class="btn btn-outline-secondary btn-sm" onclick="addRow('DE','sa')"><i class="bi bi-plus"></i> Zeile</button>
                   </div>
                   <div class="table-responsive mt-2">
                     <table class="table table-sm align-middle" id="tblDE_sa" aria-label="Schularbeitstabelle Deutsch">
-                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <thead>
+                        <tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr>
+                      </thead>
                       <tbody></tbody>
                       <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgDE_sa">–</span> %</th><th></th></tr></tfoot>
                     </table>
@@ -182,13 +165,15 @@
                   </div>
                   <div class="table-responsive mt-2">
                     <table class="table table-sm align-middle" id="tblDE_ans" aria-label="Ansagetabelle Deutsch">
-                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <thead>
+                        <tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr>
+                      </thead>
                       <tbody></tbody>
                       <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgDE_ans">–</span> %</th><th></th></tr></tfoot>
                     </table>
                   </div>
                 </div>
-                <!-- HU -->
+                <!-- Hausübung -->
                 <div class="mt-4">
                   <div class="d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">Hausübung</h6>
@@ -196,13 +181,15 @@
                   </div>
                   <div class="table-responsive mt-2">
                     <table class="table table-sm align-middle" id="tblDE_hu" aria-label="Hausübungstabelle Deutsch">
-                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <thead>
+                        <tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr>
+                      </thead>
                       <tbody></tbody>
                       <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgDE_hu">–</span> %</th><th></th></tr></tfoot>
                     </table>
                   </div>
                 </div>
-                <!-- MI -->
+                <!-- Mitarbeit -->
                 <div class="mt-4">
                   <div class="d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">Mitarbeit</h6>
@@ -210,15 +197,19 @@
                   </div>
                   <div class="table-responsive mt-2">
                     <table class="table table-sm align-middle" id="tblDE_mi" aria-label="Mitarbeitstabelle Deutsch">
-                      <thead><tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr></thead>
+                      <thead>
+                        <tr><th>Art</th><th class="text-end">Erzielt / Fehler / Vergessen</th><th class="text-end">Max. / Gesamt</th><th class="text-end">%</th><th></th></tr>
+                      </thead>
                       <tbody></tbody>
                       <tfoot><tr><th colspan="3" class="text-end">Kategorie-Ø</th><th class="text-end"><span id="avgDE_mi">–</span> %</th><th></th></tr></tfoot>
                     </table>
                   </div>
                 </div>
               </div>
-              <!-- Ergebnis Deutsch -->
-              <div class="card p-3 p-md-4 mt-4">
+            </div>
+            <!-- Ergebnis Deutsch -->
+            <div class="col-lg-5">
+              <div class="card p-3 p-md-4">
                 <div class="d-flex justify-content-between align-items-center">
                   <h5 class="mb-0">Ergebnis Deutsch</h5>
                   <span id="gradeDE" class="note-pill note-5">–</span>
@@ -239,14 +230,13 @@
                   </div>
                   <div class="col-12"><canvas id="chartDEweights" height="160"></canvas></div>
                   <div class="col-12"><canvas id="chartDEcats" height="160"></canvas></div>
-                  <!-- New performance chart for Deutsch -->
-                  <div class="col-12"><canvas id="chartDEperf" height="160"></canvas></div>
+                  <div class="col-12 mt-2"><canvas id="chartDEachieved" height="120"></canvas></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <!-- Mathematik Panel -->
+        <!-- Mathematik-Panel -->
         <div class="tab-pane fade" id="pane-ma" role="tabpanel" aria-labelledby="tab-ma">
           <div class="row g-4">
             <div class="col-lg-7">
@@ -321,7 +311,7 @@
                 </div>
                 <!-- HU -->
                 <div class="mt-4">
-                  <div class="d-flex justify-content-between align-items-center">
+                  <div class="d-flex justify-content-between alignments-center">
                     <h6 class="mb-0">Hausübung</h6>
                     <button class="btn btn-outline-secondary btn-sm" onclick="addRow('MA','hu','vergessen')"><i class="bi bi-plus"></i> Zeile</button>
                   </div>
@@ -333,7 +323,7 @@
                     </table>
                   </div>
                 </div>
-                <!-- MI -->
+                <!-- Mitarbeit -->
                 <div class="mt-4">
                   <div class="d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">Mitarbeit</h6>
@@ -348,8 +338,10 @@
                   </div>
                 </div>
               </div>
-              <!-- Ergebnis Mathe -->
-              <div class="card p-3 p-md-4 mt-4">
+            </div>
+            <!-- Ergebnis Mathe -->
+            <div class="col-lg-5">
+              <div class="card p-3 p-md-4">
                 <div class="d-flex justify-content-between align-items-center">
                   <h5 class="mb-0">Ergebnis Mathe</h5>
                   <span id="gradeMA" class="note-pill note-5">–</span>
@@ -370,40 +362,29 @@
                   </div>
                   <div class="col-12"><canvas id="chartMAweights" height="160"></canvas></div>
                   <div class="col-12"><canvas id="chartMAcats" height="160"></canvas></div>
-                  <!-- New performance chart for Mathe -->
-                  <div class="col-12"><canvas id="chartMAperf" height="160"></canvas></div>
+                  <div class="col-12 mt-2"><canvas id="chartMAachieved" height="120"></canvas></div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <!-- Übersicht Panel -->
-        <div class="tab-pane fade" id="pane-overview" role="tabpanel" aria-labelledby="tab-overview">
-          <div class="row g-4">
-            <div class="col-12">
-              <div class="card p-3 p-md-4">
-                <h5>Übersicht</h5>
-                <canvas id="overviewChart" height="200"></canvas>
-                <div class="mt-3">
-                  <div class="alert alert-info">
-                    Wenn dir diese App gefällt und du die Entwicklung unterstützen möchtest, freuen wir uns über eine Spende!
-                    <a href="#spendenlink" target="_blank">Spenden-Link</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- End of tab-content -->
-      <div class="mt-4">
-        <div class="chip">
-          <i class="bi bi-question-circle"></i> Punkte: <em>erzielt / maximal</em> · Fehler: <em>Fehler / Gesamtaufgaben</em> · Vergessen (HU): <em>vergessen / vergebene</em> · Note 1–5 → Prozent (über Schwellen)
         </div>
       </div>
     </div>
+    <div class="mt-4">
+      <div class="d-flex gap-2 flex-wrap mb-2">
+        <button id="btnExportCSV" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i> Export (CSV)</button>
+        <button id="btnImportCSV" class="btn btn-sm btn-outline-secondary"><i class="bi bi-upload"></i> Import (CSV)</button>
+        <button id="btnPrint" class="btn btn-sm btn-outline-success"><i class="bi bi-file-earmark-pdf"></i> Als PDF</button>
+        <button id="btnReset" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-circle"></i> Zurücksetzen</button>
+      </div>
+      <div class="chip">
+        <i class="bi bi-question-circle"></i> Punkte: <em>erzielt / maximal</em> · Fehler: <em>Fehler / Gesamtaufgaben</em> · Vergessen (HU): <em>vergessen / vergebene</em> · Note 1–5 → Prozent (über Schwellen)
+      </div>
+      <input id="fileImport" type="file" accept="text/csv,text/plain" style="display:none" />
+    </div>
   </main>
-  <!-- Bewertungsschwellen Modal -->
+
+  <!-- Modal für Notenschwellen -->
   <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -412,7 +393,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
         </div>
         <div class="modal-body">
-          <p class="small text-secondary mb-2">Passe hier die Grenze (in Prozent) an, ab der die jeweilige Note erreicht wird. Unterhalb der Note-4-Grenze ist die Note 5.</p>
+          <p class="small text-secondary mb-2">Passe hier die Grenze (in Prozent) an, ab der die jeweilige Note erreicht wird. Unterhalb der Note-4-Grenze wird die Note 5 vergeben.</p>
           <div class="row g-3">
             <div class="col-6">
               <label class="form-label small">Note 1 ab (%)</label>
@@ -438,7 +419,8 @@
       </div>
     </div>
   </div>
-  <!-- Row Template for dynamic rows -->
+
+  <!-- Zeilenvorlage -->
   <template id="rowTemplate">
     <tr>
       <td>
@@ -450,19 +432,20 @@
           <option value="prozent">Prozent</option>
         </select>
       </td>
-      <td class="text-end"><input type="number" class="form-control form-control-sm valA" placeholder="…"></td>
-      <td class="text-end"><input type="number" class="form-control form-control-sm valB" placeholder="…"></td>
+      <td class="text-end"><input type="number" class="form-control form-control-sm valA" placeholder="…" /></td>
+      <td class="text-end"><input type="number" class="form-control form-control-sm valB" placeholder="…" /></td>
       <td class="text-end fw-semibold"><span class="pct">–</span> %</td>
       <td class="text-end"><button class="btn btn-sm btn-outline-danger" title="Zeile entfernen"><i class="bi bi-trash"></i></button></td>
     </tr>
   </template>
-  <!-- JavaScript for functionality -->
+
   <script>
-    // Utility functions
+    // Hilfsfunktionen
     const el = id => document.getElementById(id);
-    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-    const f2 = n => (isFinite(n) ? n.toFixed(1) : '–');
-    // Thresholds for grades
+    const f2 = n => (isFinite(n)? n.toFixed(1) : "–");
+    const clamp = (v,min,max) => Math.max(min, Math.min(max, v));
+
+    // Notenschwellen
     const thresholds = { n1:90, n2:80, n3:65, n4:50 };
     function pct2note(p){
       if (!isFinite(p)) return 5;
@@ -473,29 +456,47 @@
       return 5;
     }
     function noteClass(n){ return `note-${clamp(n,1,5)}`; }
-    // Convert row values to percentage
+
+    // Global error handlers to surface problems during development
+    window.addEventListener('error', function(e){
+      try{ console.error('Unhandled error', e); alert('JavaScript-Fehler: '+e.message+'\nSiehe Konsole für Details.'); }catch(_){ }
+    });
+    window.addEventListener('unhandledrejection', function(e){
+      try{ console.error('Unhandled rejection', e); alert('Promise-Rejection: '+(e.reason && e.reason.message ? e.reason.message : e.reason)); }catch(_){ }
+    });
+
+    // Prozentberechnung pro Zeile
     function rowToPercent(type, a, b){
       const x = parseFloat(a), y = parseFloat(b);
       switch(type){
-        case 'punkte': return (y > 0) ? clamp(100 * x / y, 0, 100) : NaN;
-        case 'fehler': return (y > 0) ? clamp(100 * (1 - x / y), 0, 100) : NaN;
-        case 'vergessen': return (y > 0) ? clamp(100 * (1 - x / y), 0, 100) : NaN;
-        case 'note': {
+        case 'punkte':
+          if (y>0) return clamp(100 * x / y, 0, 100);
+          return NaN;
+        case 'fehler':
+          if (y>0) return clamp(100 * (1 - x / y), 0, 100);
+          return NaN;
+        case 'vergessen':
+          if (y>0) return clamp(100 * (1 - x / y), 0, 100);
+          return NaN;
+        case 'note':
           const n = clamp(Math.round(x),1,5);
+          const {n1,n2,n3,n4} = thresholds;
           const map = {
-            1:(thresholds.n1+100)/2,
-            2:(thresholds.n2+thresholds.n1)/2,
-            3:(thresholds.n3+thresholds.n2)/2,
-            4:(thresholds.n4+thresholds.n3)/2,
-            5:(0+thresholds.n4)/2
+            1:(n1+100)/2,
+            2:(n2+n1)/2,
+            3:(n3+n2)/2,
+            4:(n4+n3)/2,
+            5:(0+n4)/2
           };
-          return clamp(map[n] || NaN, 0, 100);
-        }
-        case 'prozent': return clamp(x, 0, 100);
+          return clamp(map[n],0,100);
+        case 'prozent':
+          return clamp(x,0,100);
+        default:
+          return NaN;
       }
-      return NaN;
     }
-    // Add a new row to a category
+
+    // Zeile hinzufügen
     function addRow(fach, cat, preferredType){
       const table = el(`tbl${fach}_${cat}`).querySelector('tbody');
       const tpl = document.getElementById('rowTemplate').content.cloneNode(true);
@@ -505,16 +506,19 @@
       const valB = tr.querySelector('.valB');
       const pctSpan = tr.querySelector('.pct');
       const delBtn = tr.querySelector('button');
+
       if (preferredType){ typeSel.value = preferredType; }
+      adaptInputs();
+
       function adaptInputs(){
         const t = typeSel.value;
-        valA.disabled = false;
-        valB.disabled = false;
-        if (t === 'punkte') { valA.placeholder = 'erzielt'; valB.placeholder = 'max.'; }
-        else if (t === 'fehler') { valA.placeholder = 'Fehler'; valB.placeholder = 'gesamt'; }
-        else if (t === 'vergessen') { valA.placeholder = 'vergessen'; valB.placeholder = 'vergeben'; }
-        else if (t === 'note') { valA.placeholder = '1–5'; valB.value = ''; valB.placeholder = '—'; valB.disabled = true; }
-        else if (t === 'prozent') { valA.placeholder = '%'; valB.value = ''; valB.placeholder = '—'; valB.disabled = true; }
+        valA.disabled=false;
+        valB.disabled=false;
+        if (t==='punkte'){ valA.placeholder='erzielt'; valB.placeholder='max.'; }
+        else if (t==='fehler'){ valA.placeholder='Fehler'; valB.placeholder='gesamt'; }
+        else if (t==='vergessen'){ valA.placeholder='vergessen'; valB.placeholder='vergeben'; }
+        else if (t==='note'){ valA.placeholder='1–5'; valB.value=''; valB.placeholder='—'; valB.disabled=true; }
+        else if (t==='prozent'){ valA.placeholder='%'; valB.value=''; valB.placeholder='—'; valB.disabled=true; }
         compute();
       }
       function compute(){
@@ -524,121 +528,145 @@
         recalcAll();
       }
       typeSel.addEventListener('change', adaptInputs);
-      [valA, valB].forEach(x => x.addEventListener('input', compute));
-      delBtn.addEventListener('click', () => { tr.remove(); recalcAll(); });
+  [valA,valB].forEach(x=>{ x.addEventListener('input', compute); x.addEventListener('change', compute); });
+      delBtn.addEventListener('click',()=>{ tr.remove(); recalcAll(); });
+
       table.appendChild(tr);
-      adaptInputs();
     }
-    // Read weight values
+
+    // Gewichtungen lesen
     function readWeights(f){
-      if (f === 'DE'){
-        return { sa: parseFloat(el('wDE_sa').value) || 0, ans: parseFloat(el('wDE_ans').value) || 0, hu: parseFloat(el('wDE_hu').value) || 0, mi: parseFloat(el('wDE_mi').value) || 0 };
+      if (f==='DE'){
+        return { sa: parseFloat(el('wDE_sa').value)||0, ans: parseFloat(el('wDE_ans').value)||0, hu: parseFloat(el('wDE_hu').value)||0, mi: parseFloat(el('wDE_mi').value)||0 };
       } else {
-        return { sa: parseFloat(el('wMA_sa').value) || 0, lzk: parseFloat(el('wMA_lzk').value) || 0, hu: parseFloat(el('wMA_hu').value) || 0, mi: parseFloat(el('wMA_mi').value) || 0 };
+        return { sa: parseFloat(el('wMA_sa').value)||0, lzk: parseFloat(el('wMA_lzk').value)||0, hu: parseFloat(el('wMA_hu').value)||0, mi: parseFloat(el('wMA_mi').value)||0 };
       }
     }
-    // Compute category average
+
+    // Kategorie-Durchschnitt
     function catAvg(f, cat){
       const rows = el(`tbl${f}_${cat}`).querySelectorAll('tbody tr');
-      let sum = 0, n = 0;
-      rows.forEach(r => {
+      let sum=0, n=0;
+      rows.forEach(r=>{
         const t = r.querySelector('.typeSel').value;
         const a = r.querySelector('.valA').value;
         const b = r.querySelector('.valB').value;
         const p = rowToPercent(t, a, b);
-        if (isFinite(p)){ sum += p; n++; }
+        // update per-row percent display so UI stays in sync
+        const pctSpan = r.querySelector('.pct');
+        if (pctSpan) pctSpan.textContent = isFinite(p) ? f2(p) : '–';
+        if (isFinite(p)){ sum+=p; n++; }
       });
       const avg = n ? sum / n : NaN;
-      el(`avg${f}_${cat}`).textContent = isFinite(avg) ? f2(avg) : '–';
+      el(`avg${f}_${cat}`).textContent = isFinite(avg)? f2(avg) : '–';
       return avg;
     }
-    // Compute weighted total and sum of weights
-    function weightedTotal(f, weights, cats){
-      let wsum = 0, acc = 0;
-      cats.forEach(cat => {
-        const w = Number(weights[cat]) || 0;
-        const avg = catAvg(f, cat);
-        if (isFinite(avg) && w > 0){ acc += avg * (w / 100); }
+
+    // Gesamtergebnisse berechnen
+    function calcTotals(f){
+      const weights = readWeights(f);
+      const cats = f==='DE' ? ['sa','ans','hu','mi'] : ['sa','lzk','hu','mi'];
+      let wsum=0, acc=0;
+      cats.forEach(c=>{
+        const w = weights[c]||0;
+        const avg = catAvg(f, c);
+        if (isFinite(avg) && w>0){ acc += avg * (w/100); }
         wsum += w;
       });
-      return { total: (wsum === 100 ? acc : NaN), wsum, partial: acc };
+      return { total: (wsum===100? acc : NaN), wsum, partial: acc };
     }
-    // Chart instances
-    const charts = { DE:{ w:null, c:null, p:null }, MA:{ w:null, c:null, p:null } };
-    // Update the weight, category and performance charts
-    function updateCharts(f, weights, cats){
-      const wCanvas = el(f === 'DE' ? 'chartDEweights' : 'chartMAweights');
-      const cCanvas = el(f === 'DE' ? 'chartDEcats' : 'chartMAcats');
-      const pCanvas = el(f === 'DE' ? 'chartDEperf' : 'chartMAperf');
-      const labels = cats.map(k => ({ sa:'Schularbeit(en)', ans:'Ansage', hu:'Hausübung', mi:'Mitarbeit', lzk:'LZK' })[k]);
-      const weightVals = cats.map(k => Number(weights[k]) || 0);
-      const catVals = cats.map(k => {
-        const t = el(`avg${f}_${k}`).textContent.replace(',', '.');
-        const num = parseFloat(t);
-        return isFinite(num) ? num : 0;
-      });
-      // Weights chart
-      if (charts[f].w) charts[f].w.destroy();
-      charts[f].w = new Chart(wCanvas, {
-        type:'doughnut',
-        data:{ labels, datasets:[{ data: weightVals, backgroundColor:['#0d6efd','#0dcaf0','#ffc107','#198754'] }] },
-        options:{ plugins:{ legend:{ position:'bottom' }, title:{ display:true, text:'Gewichtungs-Verteilung (%)' } }, cutout:'60%' }
-      });
-      // Category averages bar chart
-      if (charts[f].c) charts[f].c.destroy();
-      charts[f].c = new Chart(cCanvas, {
-        type:'bar',
-        data:{ labels, datasets:[{ label:'Kategorie-Ø (%)', data: catVals, backgroundColor:'#0d6efd' }] },
-        options:{ plugins:{ legend:{ display:false }, title:{ display:true, text:'Kategorien-Durchschnitte' } }, scales:{ y:{ beginAtZero:true, max:100 } } }
-      });
-      // Performance chart (doughnut of category averages)
-      if (charts[f].p) charts[f].p.destroy();
-      charts[f].p = new Chart(pCanvas, {
-        type:'doughnut',
-        data:{ labels, datasets:[{ data: catVals, backgroundColor:['#0d6efd','#0dcaf0','#ffc107','#198754'] }] },
-        options:{ plugins:{ legend:{ position:'bottom' }, title:{ display:true, text:'Kategorie-Durchschnitt (%)' } }, cutout:'60%' }
-      });
-    }
-    // Update summary and charts for a subject
+
+    // Ergebnis-UI aktualisieren
     function updateSummary(f){
-      const weights = readWeights(f);
-      const cats = f === 'DE' ? ['sa','ans','hu','mi'] : ['sa','lzk','hu','mi'];
-      // Weight sum
-      const sum = Object.values(weights).reduce((a,b) => a + (Number(b) || 0), 0);
-      const sumEl = el(f === 'DE' ? 'sumDE' : 'sumMA');
-      const miniEl = el(f === 'DE' ? 'sumDEmini' : 'sumMAmini');
-      sumEl.textContent = `Summe: ${sum} %`;
-      miniEl.textContent = `${sum} %`;
-      sumEl.classList.toggle('sum-ok', sum === 100);
-      sumEl.classList.toggle('sum-bad', sum !== 100);
-      // Totals
-      const { total, wsum, partial } = weightedTotal(f, weights, cats);
-      const totalPctEl = el(f === 'DE' ? 'totalPctDE' : 'totalPctMA');
-      const gradeEl = el(f === 'DE' ? 'gradeDE' : 'gradeMA');
-      const pct = (wsum === 100) ? partial : NaN;
+      const { total, wsum, partial } = calcTotals(f);
+      const sumEl = el(f==='DE' ? 'sumDE' : 'sumMA');
+      const miniEl = el(f==='DE' ? 'sumDEmini' : 'sumMAmini');
+      sumEl.textContent = `Summe: ${wsum} %`;
+      miniEl.textContent = `${wsum} %`;
+      sumEl.classList.toggle('sum-ok', wsum===100);
+      sumEl.classList.toggle('sum-bad', wsum!==100);
+      const totalPctEl = el(f==='DE' ? 'totalPctDE' : 'totalPctMA');
+      const gradeEl = el(f==='DE' ? 'gradeDE' : 'gradeMA');
+      // Always show the weighted partial total. If weights don't sum to 100, indicate it visually.
+      const pct = isFinite(partial) ? partial : NaN;
       totalPctEl.textContent = isFinite(pct) ? `${f2(pct)} %` : '– %';
-      const note = isFinite(pct) ? pct2note(pct) : 5;
-      gradeEl.className = `note-pill ${noteClass(note)}`;
-      gradeEl.textContent = isFinite(pct) ? `Note ${note}` : '–';
-      // Update charts
-      updateCharts(f, weights, cats);
+      if (isFinite(pct)){
+        const note = pct2note(pct);
+        gradeEl.className = `note-pill ${noteClass(note)}`;
+        gradeEl.textContent = `Note ${note}`;
+        // de-emphasize if weights incomplete
+        gradeEl.style.opacity = (wsum===100 ? '1' : '0.6');
+        gradeEl.title = (wsum===100 ? '' : 'Gewichtungen ergeben nicht 100 % — Ergebnis ist nur teilweise aussagekräftig');
+      } else {
+        gradeEl.className = `note-pill ${noteClass(5)}`;
+        gradeEl.textContent = '–';
+        gradeEl.style.opacity = '1';
+        gradeEl.title = '';
+      }
+      updateCharts(f, readWeights(f));
     }
-    // Recalculate all summaries
+
+    // Alles neu berechnen
     function recalcAll(){
-      thresholds.n1 = parseFloat(el('thr1').value) || thresholds.n1;
-      thresholds.n2 = parseFloat(el('thr2').value) || thresholds.n2;
-      thresholds.n3 = parseFloat(el('thr3').value) || thresholds.n3;
-      thresholds.n4 = parseFloat(el('thr4').value) || thresholds.n4;
+      thresholds.n1 = parseFloat(el('thr1').value)||thresholds.n1;
+      thresholds.n2 = parseFloat(el('thr2').value)||thresholds.n2;
+      thresholds.n3 = parseFloat(el('thr3').value)||thresholds.n3;
+      thresholds.n4 = parseFloat(el('thr4').value)||thresholds.n4;
       updateSummary('DE');
       updateSummary('MA');
     }
-    // Bind weight input events
-    function bindWeightInputs(){
-      ['wDE_sa','wDE_ans','wDE_hu','wDE_mi','wMA_sa','wMA_lzk','wMA_hu','wMA_mi'].forEach(id => {
-        el(id).addEventListener('input', recalcAll);
+
+    // ensure every recalculation persists to active child
+    const __origRecalcAll = recalcAll;
+    recalcAll = function(){ __origRecalcAll(); try{ const active = localStorage.getItem(ACTIVE_CHILD_KEY) || el('childSelect')?.value; if (active) localStorage.setItem(stateKeyFor(active), JSON.stringify(buildCurrentState())); }catch(e){ console.warn('save on recalc failed', e); } };
+
+    // Charts
+  const charts = { DE:{ w:null, c:null, a:null }, MA:{ w:null, c:null, a:null } };
+    function updateCharts(f, weights){
+      const cats = f==='DE' ? ['sa','ans','hu','mi'] : ['sa','lzk','hu','mi'];
+      const labelMap = { sa: f==='DE'?'Schularbeit(en)':'Schularbeiten', ans:'Ansage', hu:'Hausübung', mi:'Mitarbeit', lzk:'LZK' };
+      const labels = cats.map(k=>labelMap[k]);
+      const weightVals = cats.map(k=>weights[k]||0);
+      const catVals = cats.map(k=>{
+        const txt = el(`avg${f}_${k}`).textContent.replace(',', '.');
+        const num = parseFloat(txt);
+        return isFinite(num) ? num : 0;
+      });
+  const wCanvas = el(f==='DE'?'chartDEweights':'chartMAweights');
+  const cCanvas = el(f==='DE'?'chartDEcats':'chartMAcats');
+  const aCanvas = el(f==='DE'?'chartDEachieved':'chartMAachieved');
+      if (charts[f].w) charts[f].w.destroy();
+      charts[f].w = new Chart(wCanvas, {
+        type:'doughnut',
+        data:{ labels: labels, datasets:[{ data: weightVals, backgroundColor:[ '#0d6efd', '#0dcaf0', '#ffc107', '#198754' ] }]},
+        options:{ plugins:{ legend:{ position:'bottom' }, title:{ display:true, text:'Gewichtungs-Verteilung' } }, cutout:'60%' }
+      });
+      if (charts[f].c) charts[f].c.destroy();
+      charts[f].c = new Chart(cCanvas, {
+        type:'bar',
+        data:{ labels: labels, datasets:[{ label:'Kategorie-Ø (%)', data: catVals, backgroundColor:'#0d6efd' }]},
+        options:{ plugins:{ legend:{ display:false }, title:{ display:true, text:'Kategorien-Durchschnitte' } }, scales:{ y:{ beginAtZero:true, max:100 } } }
+      });
+      // achieved vs missing chart (stacked)
+      const achieved = catVals;
+      const missing = achieved.map((v,idx)=> Math.max(0, 100 - (v||0)));
+      if (charts[f].a) charts[f].a.destroy();
+      charts[f].a = new Chart(aCanvas, {
+        type:'bar',
+        data:{ labels: labels, datasets:[{ label:'Erreicht', data: achieved, backgroundColor:'#198754' }, { label:'Fehlt', data: missing, backgroundColor:'rgba(25,135,84,0.25)' }]},
+        options:{ plugins:{ legend:{ position:'bottom' }, title:{ display:true, text:'Erreichte vs. fehlende Prozent' } }, scales:{ x:{ stacked:true }, y:{ stacked:true, beginAtZero:true, max:100 } } }
       });
     }
-    // Seed initial rows for demonstration
+
+    function bindWeightInputs(){
+      ['wDE_sa','wDE_ans','wDE_hu','wDE_mi','wMA_sa','wMA_lzk','wMA_hu','wMA_mi'].forEach(id=>{
+        const e = el(id);
+        if (!e) return;
+        e.addEventListener('input', recalcAll);
+        e.addEventListener('change', recalcAll);
+      });
+    }
+
     function seedRows(){
       // Deutsch
       addRow('DE','sa','punkte');
@@ -650,13 +678,13 @@
       addRow('MA','lzk','fehler');
       addRow('MA','hu','vergessen');
       addRow('MA','mi','prozent');
-      // Fill sample values
+      // Beispielwerte
       const fill = (tblId,a,b) => {
         const row = document.querySelector(`#${tblId} tbody tr`);
         if (row){
-          row.querySelector('.valA').value = a;
+          row.querySelector('.valA').value=a;
           const vb = row.querySelector('.valB');
-          if (!vb.disabled) vb.value = b;
+          if (!vb.disabled) vb.value=b;
         }
       };
       fill('tblDE_sa',45,50);
@@ -670,338 +698,139 @@
       fill('tblMA_mi',90,0);
       recalcAll();
     }
-    // -------- Local Storage & Child Management --------
-    let childrenData = [];
-    const storageKey = 'notenrechner_children';
-    function loadFromStorage(){
-      try {
-        const s = localStorage.getItem(storageKey);
-        if (s){ childrenData = JSON.parse(s); }
-        else { childrenData = []; }
-      } catch (e){ childrenData = []; }
-    }
-    function saveToStorage(){
-      localStorage.setItem(storageKey, JSON.stringify(childrenData));
-    }
-    function generateId(){
-      return Date.now().toString(36) + Math.random().toString(36).substr(2,5);
-    }
-    /**
-     * Populate the child select dropdown.
-     *
-     * When repopulating the list, preserve the previously selected child if it still exists.
-     * Optionally a specific child ID can be passed to force selection of that child.
-     * If no children exist, the UI is reset to default values.
-     *
-     * @param {string} [preferredId] - Optional ID of the child that should be selected.
-     */
-    function updateChildSelect(preferredId){
-      const select = el('childSelect');
-      // Remember the currently selected ID before resetting the list
-      const currentId = preferredId || select.value;
-      // Clear current options
-      select.innerHTML = '';
-      // Build new options from childrenData
-      childrenData.forEach(child => {
-        const option = document.createElement('option');
-        option.value = child.id;
-        option.textContent = child.name;
-        select.appendChild(option);
-      });
-      if (childrenData.length > 0){
-        // Try to select the preferred/current child if it still exists
-        let idToSelect = currentId;
-        if (!childrenData.some(c => c.id === idToSelect)){
-          // If it no longer exists (e.g., deleted), fallback to the last child in the list
-          idToSelect = childrenData[childrenData.length - 1].id;
-        }
-        select.value = idToSelect;
-        loadChild(idToSelect);
-        // After loading a child, ensure all summaries are recalculated
-        recalcAll();
-      } else {
-        // No children: reset UI to defaults
-        importDataToUI({
-          weights: { DE:{sa:40,ans:20,hu:20,mi:20}, MA:{sa:50,lzk:20,hu:15,mi:15} },
-          rows: { DE:{sa:[],ans:[],hu:[],mi:[]}, MA:{sa:[],lzk:[],hu:[],mi:[]} },
-          thresholds: thresholds
-        });
-        // Recalculate summaries after resetting to default values
-        recalcAll();
-      }
-    }
-    function loadChild(childId){
-      const child = childrenData.find(c => c.id === childId);
-      if (child && child.data){
-        importDataToUI(child.data);
-      }
-    }
-    function saveCurrentChild(){
-      const select = el('childSelect');
-      const id = select.value;
-      if (!id){ alert('Kein Kind ausgewählt.'); return; }
-      const child = childrenData.find(c => c.id === id);
-      if (!child) return;
-      child.data = exportDataFromUI();
-      saveToStorage();
-      alert('Daten gespeichert');
-    }
-    function addChild(){
-      const name = prompt('Name des Kindes:');
-      if (!name) return;
-      const id = generateId();
-      const defaultData = { weights: { DE:{sa:40,ans:20,hu:20,mi:20}, MA:{sa:50,lzk:20,hu:15,mi:15} }, rows: { DE:{sa:[],ans:[],hu:[],mi:[]}, MA:{sa:[],lzk:[],hu:[],mi:[]} }, thresholds: { ...thresholds } };
-      childrenData.push({ id, name, data: defaultData });
-      saveToStorage();
-      // After adding a new child, update the dropdown and select the newly created profile
-      updateChildSelect(id);
-    }
-    function deleteChild(){
-      const select = el('childSelect');
-      const id = select.value;
-      if (!id){ alert('Kein Kind ausgewählt.'); return; }
-      if (!confirm('Soll dieses Kindprofil gelöscht werden?')) return;
-      childrenData = childrenData.filter(c => c.id !== id);
-      saveToStorage();
-      updateChildSelect();
-    }
-    // Export and import
-    function exportAll(){
-      // prettier JSON export
-      const dataStr = JSON.stringify(childrenData, null, 2);
-      const blob = new Blob([dataStr], { type:'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'notenrechner_backup.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-    function importAll(evt){
-      const file = evt.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(){
-        try {
-          const imported = JSON.parse(reader.result);
-          if (Array.isArray(imported)){
-            if (confirm('Die existierenden Daten werden ersetzt. Fortfahren?')){
-              childrenData = imported;
-              saveToStorage();
-              updateChildSelect();
-            }
-          } else {
-            alert('Ungültige Datei');
-          }
-        } catch (e){ alert('Fehler beim Import: ' + e.message); }
-      };
-      reader.readAsText(file);
-      evt.target.value = '';
-    }
-    // Overview chart
-    let overviewChart;
-    function updateOverviewChart(){
-      const labels = childrenData.map(c => c.name);
-      const dataDE = [];
-      const dataMA = [];
-      childrenData.forEach(c => {
-        const { weights, rows } = c.data || {};
-        function calcTotal(f){
-          const w = weights?.[f] || {};
-          const cats = f === 'DE' ? ['sa','ans','hu','mi'] : ['sa','lzk','hu','mi'];
-          let sumW = 0, acc = 0;
-          cats.forEach(cat => {
-            const weight = Number(w[cat]) || 0;
-            const list = rows?.[f]?.[cat] || [];
-            let sum = 0, n = 0;
-            list.forEach(r => {
-              const p = rowToPercent(r.type, r.a, r.b);
-              if (isFinite(p)){ sum += p; n++; }
-            });
-            const avg = n ? sum/n : NaN;
-            if (isFinite(avg) && weight > 0){ acc += avg * (weight/100); }
-            sumW += weight;
-          });
-          return sumW === 100 ? acc : NaN;
-        }
-        const pDE = calcTotal('DE');
-        const pMA = calcTotal('MA');
-        dataDE.push(isFinite(pDE) ? parseFloat(pDE.toFixed(1)) : null);
-        dataMA.push(isFinite(pMA) ? parseFloat(pMA.toFixed(1)) : null);
-      });
-      const ctx = document.getElementById('overviewChart').getContext('2d');
-      if (overviewChart) overviewChart.destroy();
-      overviewChart = new Chart(ctx, {
-        type:'bar',
-        data:{ labels, datasets:[ { label:'Deutsch (%)', data: dataDE }, { label:'Mathe (%)', data: dataMA } ] },
-        options:{ scales:{ y:{ beginAtZero:true, max:100 } }, plugins:{ title:{ display:true, text:'Gesamt-Prozent je Fach pro Kind' } } }
-      });
-    }
-    // Export data from UI
-    function exportDataFromUI(){
-      const weights = {
-        DE: { sa: parseFloat(el('wDE_sa').value)||0, ans: parseFloat(el('wDE_ans').value)||0, hu: parseFloat(el('wDE_hu').value)||0, mi: parseFloat(el('wDE_mi').value)||0 },
-        MA: { sa: parseFloat(el('wMA_sa').value)||0, lzk: parseFloat(el('wMA_lzk').value)||0, hu: parseFloat(el('wMA_hu').value)||0, mi: parseFloat(el('wMA_mi').value)||0 }
-      };
-      function getRows(f,cat){
-        const rows = [];
-        document.querySelectorAll(`#tbl${f}_${cat} tbody tr`).forEach(r => {
-          const type = r.querySelector('.typeSel').value;
-          const a = r.querySelector('.valA').value || '';
-          const b = r.querySelector('.valB').value || '';
-          rows.push({ type, a, b });
-        });
-        return rows;
-      }
-      const rows = {
-        DE: { sa: getRows('DE','sa'), ans: getRows('DE','ans'), hu: getRows('DE','hu'), mi: getRows('DE','mi') },
-        MA: { sa: getRows('MA','sa'), lzk: getRows('MA','lzk'), hu: getRows('MA','hu'), mi: getRows('MA','mi') }
-      };
-      const thrs = { n1: parseFloat(el('thr1').value)||thresholds.n1, n2: parseFloat(el('thr2').value)||thresholds.n2, n3: parseFloat(el('thr3').value)||thresholds.n3, n4: parseFloat(el('thr4').value)||thresholds.n4 };
-      return { weights, rows, thresholds: thrs };
-    }
-    // Import data into UI
-    function importDataToUI(data){
-      const wDE = data.weights?.DE || {};
-      const wMA = data.weights?.MA || {};
-      if (wDE){ ['sa','ans','hu','mi'].forEach(k => { if (wDE[k] !== undefined) el('wDE_'+k).value = wDE[k]; }); }
-      if (wMA){ ['sa','lzk','hu','mi'].forEach(k => { if (wMA[k] !== undefined) el('wMA_'+k).value = wMA[k]; }); }
-      // Clear existing rows
-      ['DE_sa','DE_ans','DE_hu','DE_mi','MA_sa','MA_lzk','MA_hu','MA_mi'].forEach(id => {
-        const tbody = document.querySelector(`#${id} tbody`);
-        tbody.innerHTML = '';
-      });
-      // Add rows
-      function addRows(f,cat,list){
-        list.forEach(r => {
-          addRow(f,cat);
-          const lastRow = document.querySelector(`#tbl${f}_${cat} tbody tr:last-child`);
-          lastRow.querySelector('.typeSel').value = r.type;
-          const valA = lastRow.querySelector('.valA');
-          const valB = lastRow.querySelector('.valB');
-          valA.value = r.a;
-          if (!valB.disabled) valB.value = r.b;
-          lastRow.querySelector('.typeSel').dispatchEvent(new Event('change'));
-          valA.dispatchEvent(new Event('input'));
-          valB.dispatchEvent(new Event('input'));
-        });
-      }
-      const rowsDE = data.rows?.DE || {};
-      const rowsMA = data.rows?.MA || {};
-      addRows('DE','sa', rowsDE.sa || []);
-      addRows('DE','ans', rowsDE.ans || []);
-      addRows('DE','hu', rowsDE.hu || []);
-      addRows('DE','mi', rowsDE.mi || []);
-      addRows('MA','sa', rowsMA.sa || []);
-      addRows('MA','lzk', rowsMA.lzk || []);
-      addRows('MA','hu', rowsMA.hu || []);
-      addRows('MA','mi', rowsMA.mi || []);
-      // Thresholds
-      const thrs = data.thresholds || {};
-      if (thrs.n1 !== undefined) el('thr1').value = thrs.n1;
-      if (thrs.n2 !== undefined) el('thr2').value = thrs.n2;
-      if (thrs.n3 !== undefined) el('thr3').value = thrs.n3;
-      if (thrs.n4 !== undefined) el('thr4').value = thrs.n4;
-      recalcAll();
-    }
-    // PDF export function
-    async function exportPdf(){
-      // create a PDF for the currently selected child
-      if (!window.jspdf) {
-        alert('Fehler: jsPDF konnte nicht geladen werden.');
-        return;
-      }
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      // Title
-      doc.setFontSize(16);
-      doc.text('Notenrechner – Übersicht', 10, 10);
-      let y = 20;
-      const childSelect = el('childSelect');
-      const selectedChild = childrenData.find(c => c.id === childSelect.value);
-      if (selectedChild){
-        doc.setFontSize(14);
-        doc.text(`Kind: ${selectedChild.name}`, 10, y);
-        y += 8;
-        // Summaries for each subject
-        ['DE','MA'].forEach(f => {
-          const subjectName = f === 'DE' ? 'Deutsch' : 'Mathematik';
-          doc.setFontSize(14);
-          doc.text(subjectName, 10, y);
-          y += 6;
-          // list category averages
-          const cats = f === 'DE' ? ['sa','ans','hu','mi'] : ['sa','lzk','hu','mi'];
-          cats.forEach(cat => {
-            const label = ({ sa:'Schularbeiten', ans:'Ansage', hu:'Hausübung', mi:'Mitarbeit', lzk:'LZK' })[cat];
-            const avgEl = el(`avg${f}_${cat}`);
-            const val = avgEl ? avgEl.textContent : '–';
-            doc.setFontSize(12);
-            doc.text(`${label}: ${val} %`, 12, y);
-            y += 5;
-            if (y > 270) { doc.addPage(); y = 20; }
-          });
-          // Add performance and weight charts as images
-          const wChart = charts[f].w;
-          const pChart = charts[f].p;
-          if (wChart && pChart){
-            // convert canvas to PNG
-            const wImg = wChart.toBase64Image();
-            const pImg = pChart.toBase64Image();
-            doc.addPage();
-            doc.setFontSize(14);
-            doc.text(`${subjectName} – Gewichtungsverteilung`, 10, 10);
-            doc.addImage(wImg, 'PNG', 10, 20, 180, 90);
-            doc.addPage();
-            doc.text(`${subjectName} – Kategorie-Durchschnitte`, 10, 10);
-            doc.addImage(pImg, 'PNG', 10, 20, 180, 90);
-          }
-        });
-      }
-      // Save PDF
-      doc.save('notenrechner.pdf');
-    }
-    // Export/import event handlers
-    document.getElementById('exportBtn').addEventListener('click', exportAll);
-    document.getElementById('importFile').addEventListener('change', importAll);
-    document.getElementById('addChildBtn').addEventListener('click', addChild);
-    document.getElementById('deleteChildBtn').addEventListener('click', deleteChild);
-    document.getElementById('saveChildBtn').addEventListener('click', saveCurrentChild);
-    document.getElementById('childSelect').addEventListener('change', e => loadChild(e.target.value));
-    document.getElementById('tab-overview').addEventListener('shown.bs.tab', () => updateOverviewChart());
-    // Add listener for PDF export
-    document.getElementById('pdfExportBtn').addEventListener('click', exportPdf);
 
-    // PayPal donate button: open PayPal donate page in new tab when clicked.
-    const donateBtn = document.getElementById('donateBtn');
-    if (donateBtn){
-      donateBtn.addEventListener('click', () => {
-        // Open the personal PayPal.me link in a new tab so donations go directly to the user’s account.
-        window.open('https://paypal.me/TobiasReiner793', '_blank');
+    // --- Kinderverwaltung ---
+    const CHILD_LIST_KEY = 'notenChildren';
+    const ACTIVE_CHILD_KEY = 'notenActiveChild';
+
+    function loadChildList(){
+      try{ const raw = localStorage.getItem(CHILD_LIST_KEY); return raw ? JSON.parse(raw) : []; }catch(e){ return []; }
+    }
+    function saveChildList(list){ localStorage.setItem(CHILD_LIST_KEY, JSON.stringify(list)); }
+
+    function renderChildSelect(){
+      const sel = el('childSelect'); sel.innerHTML='';
+      const list = loadChildList();
+      list.forEach(name=>{ const o = document.createElement('option'); o.value = name; o.textContent = name; sel.appendChild(o); });
+  const active = localStorage.getItem(ACTIVE_CHILD_KEY) || list[0] || null;
+  if (active) sel.value = active;
+  sel.onchange = ()=>{ localStorage.setItem(ACTIVE_CHILD_KEY, sel.value); loadStateForChild(sel.value); };
+    }
+
+    function ensureDefaultChild(){ const list = loadChildList(); if (!list.length){ list.push('Schüler 1'); saveChildList(list); localStorage.setItem(ACTIVE_CHILD_KEY, list[0]); } }
+
+    function createEmptyState(){ const state = { weights:{ DE: readWeights('DE'), MA: readWeights('MA') }, thresholds: { thr1: thresholds.n1, thr2: thresholds.n2, thr3: thresholds.n3, thr4: thresholds.n4 }, rows: [] }; return state; }
+
+    function addChild(name){ if (!name) return; const list = loadChildList(); if (list.includes(name)){ alert('Name bereits vorhanden'); return; } // create empty state for child
+      const state = createEmptyState(); localStorage.setItem(stateKeyFor(name), JSON.stringify(state)); list.push(name); saveChildList(list); localStorage.setItem(ACTIVE_CHILD_KEY, name); renderChildSelect(); loadStateForChild(name); }
+    function delChild(name){ if (!name) return; let list = loadChildList(); if (!list.includes(name)) return; if (!confirm(`Schüler "${name}" wirklich löschen? (inkl. Daten)`)) return; list = list.filter(x=>x!==name); saveChildList(list); localStorage.removeItem(stateKeyFor(name)); if (list.length) localStorage.setItem(ACTIVE_CHILD_KEY, list[0]); else localStorage.removeItem(ACTIVE_CHILD_KEY); renderChildSelect(); const nxt = localStorage.getItem(ACTIVE_CHILD_KEY); if (nxt) loadStateForChild(nxt); else { // clear UI
+      ['DE','MA'].forEach(f=>{ const cats = f==='DE'?['sa','ans','hu','mi']:['sa','lzk','hu','mi']; cats.forEach(cat=> el(`tbl${f}_${cat}`).querySelector('tbody').innerHTML=''); });
+    } }
+
+    function stateKeyFor(child){ return `notenState__${child}`; }
+
+    function saveStateForChild(child){ try{ const rawState = buildCurrentState(); localStorage.setItem(stateKeyFor(child), JSON.stringify(rawState)); // also ensure child is listed
+        const list = loadChildList(); if (!list.includes(child)){ list.push(child); saveChildList(list); } }catch(e){ console.warn(e); } }
+
+    function loadStateForChild(child){ try{ const raw = localStorage.getItem(stateKeyFor(child)); if (!raw) { // nothing saved for child -> seed
+          // clear rows and seed default rows
+          ['DE','MA'].forEach(f=>{ const cats = f==='DE'?['sa','ans','hu','mi']:['sa','lzk','hu','mi']; cats.forEach(cat=> el(`tbl${f}_${cat}`).querySelector('tbody').innerHTML=''); });
+      seedRows(); localStorage.setItem(ACTIVE_CHILD_KEY, child); return; }
+        const state = JSON.parse(raw);
+        // apply
+        if (state.weights){ if (state.weights.DE) Object.entries(state.weights.DE).forEach(([k,v])=>{ const elid='wDE_'+k; if (el(elid)) el(elid).value = v; }); if (state.weights.MA) Object.entries(state.weights.MA).forEach(([k,v])=>{ const elid='wMA_'+k; if (el(elid)) el(elid).value = v; }); }
+        if (state.thresholds){ el('thr1').value = state.thresholds.thr1; el('thr2').value = state.thresholds.thr2; el('thr3').value = state.thresholds.thr3; el('thr4').value = state.thresholds.thr4; }
+        ['DE','MA'].forEach(f=>{ const cats = f==='DE'?['sa','ans','hu','mi']:['sa','lzk','hu','mi']; cats.forEach(cat=> el(`tbl${f}_${cat}`).querySelector('tbody').innerHTML=''); });
+        if (Array.isArray(state.rows) && state.rows.length){
+          state.rows.forEach(r=>{ addRow(r.fach, r.cat, r.type); const last = el(`tbl${r.fach}_${r.cat}`).querySelector('tbody tr:last-child'); if (last){ last.querySelector('.valA').value = r.a; const vb = last.querySelector('.valB'); if (!vb.disabled) vb.value = r.b; } });
+        } else {
+          // ensure at least one editable row per category
+          ['DE','MA'].forEach(f=>{ const cats = f==='DE'?['sa','ans','hu','mi']:['sa','lzk','hu','mi']; cats.forEach(cat=>{ const tb = el(`tbl${f}_${cat}`).querySelector('tbody'); if (!tb.querySelector('tr')){
+              // choose preferred type per category
+              const pref = (f==='DE' && cat==='mi') || (f==='MA' && cat==='mi') ? 'prozent' : (cat==='hu' ? 'vergessen' : (cat==='lzk' ? 'fehler' : 'punkte'));
+              addRow(f, cat, pref);
+            } }); });
+        }
+        recalcAll(); localStorage.setItem(ACTIVE_CHILD_KEY, child);
+      }catch(e){ console.warn('loadStateForChild failed', e); }
+    }
+
+    function buildCurrentState(){ const state = { weights: {}, thresholds: {}, rows: [] }; ['DE','MA'].forEach(f=>{ state.weights[f]=readWeights(f); }); state.thresholds = { thr1: parseFloat(el('thr1').value)||thresholds.n1, thr2: parseFloat(el('thr2').value)||thresholds.n2, thr3: parseFloat(el('thr3').value)||thresholds.n3, thr4: parseFloat(el('thr4').value)||thresholds.n4 };
+      const faculties = [ ['DE',['sa','ans','hu','mi']], ['MA',['sa','lzk','hu','mi']] ]; faculties.forEach(([f,cats])=>{ cats.forEach(cat=>{ const rows = el(`tbl${f}_${cat}`).querySelectorAll('tbody tr'); rows.forEach(r=>{ const t = r.querySelector('.typeSel').value; const a = r.querySelector('.valA').value; const b = r.querySelector('.valB').value; state.rows.push({ fach:f, cat, type:t, a, b }); }); }); }); return state; }
+
+    // override save/load to be per-active-child
+    function saveState(){ try{ const active = localStorage.getItem(ACTIVE_CHILD_KEY) || el('childSelect').value; if (!active){ console.warn('No active child to save'); return; } const state = buildCurrentState(); localStorage.setItem(stateKeyFor(active), JSON.stringify(state)); // also keep child list
+        const list = loadChildList(); if (!list.includes(active)){ list.push(active); saveChildList(list); renderChildSelect(); }
+      }catch(e){ console.warn('Save failed', e); } }
+
+    function loadState(){ try{ renderChildSelect(); ensureDefaultChild(); const active = localStorage.getItem(ACTIVE_CHILD_KEY) || el('childSelect').value; if (!active) return false; loadStateForChild(active); return true; }catch(e){ console.warn(e); return false; } }
+
+    // wire child buttons
+    function bindChildButtons(){
+      const add = el('btnAddChild'); const del = el('btnDelChild');
+      if (add) add.addEventListener('click', ()=>{
+        try{
+          const name = (el('childNameInput').value||'').trim();
+          if (!name) return alert('Bitte Namen eingeben');
+          addChild(name);
+          el('childNameInput').value='';
+        }catch(e){ console.error('add child failed', e); alert('Fehler beim Hinzufügen'); }
+      });
+      const saveBtn = el('btnSaveChild'); if (saveBtn) saveBtn.addEventListener('click', ()=>{ try{ const active = localStorage.getItem(ACTIVE_CHILD_KEY) || el('childSelect')?.value; if (!active) return alert('Kein aktiver Schüler zum Speichern'); saveState(); alert('Daten gespeichert.'); }catch(e){ console.error('save child failed', e); alert('Fehler beim Speichern'); } });
+      if (del) del.addEventListener('click', ()=>{
+        try{
+          const sel = el('childSelect'); if (!sel || !sel.value) return alert('Kein Schüler ausgewählt');
+          delChild(sel.value);
+        }catch(e){ console.error('delete child failed', e); alert('Fehler beim Löschen'); }
       });
     }
-    // Initialize on DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', () => {
+
+    // update export/import to include child-key metadata
+    exportCSV = function(){ const child = localStorage.getItem(ACTIVE_CHILD_KEY) || el('childSelect').value || 'unknown'; const raw = localStorage.getItem(stateKeyFor(child)); const lines=['notenrechner-csv,v1','CH,'+child]; if (raw){ const s=JSON.parse(raw); if (s.thresholds) lines.push(`T,thr1,${s.thresholds.thr1}`), lines.push(`T,thr2,${s.thresholds.thr2}`), lines.push(`T,thr3,${s.thresholds.thr3}`), lines.push(`T,thr4,${s.thresholds.thr4}`); if (s.weights) Object.entries(s.weights).forEach(([fach,obj])=>{ Object.entries(obj).forEach(([k,v])=>{ lines.push(`W,${fach},${k},${v}`); }); }); if (Array.isArray(s.rows)) s.rows.forEach(r=>{ lines.push(`R,${r.fach},${r.cat},${r.type},${(r.a||'')},${(r.b||'')}`); }); }
+      const blob = new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download = `notenexport_${child.replace(/[^a-z0-9_-]/ig,'_')}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },5000);
+    };
+
+    // adapt import to load into current or new child if CH line present
+    importCSVText = function(text){ const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean); if (!lines.length) return alert('Leere Datei'); let targetChild = null; if (lines[0].startsWith('notenrechner-csv')){ if (lines[1] && lines[1].startsWith('CH,')){ targetChild = lines[1].split(',')[1]; } }
+      // if no child specified, ask whether to import to current
+      if (!targetChild){ if (!confirm('Keine Schülerinformation gefunden. In aktuellen Schüler importieren? (Abbrechen = neuen Schüler anlegen)')){ const name = prompt('Name des neuen Schülers:'); if (!name) return; targetChild = name; } else { targetChild = localStorage.getItem(ACTIVE_CHILD_KEY) || el('childSelect').value; } }
+      // parse the rest using original logic but building state
+      const state = { weights:{ DE:{}, MA:{} }, thresholds:{}, rows:[] };
+      lines.forEach(l=>{ const parts=l.split(','); const t=parts[0]; if (t==='CH') return; if (t==='T') state.thresholds[parts[1]] = parseFloat(parts[2]); else if (t==='W'){ const fach=parts[1], key=parts[2], val=parseFloat(parts[3])||0; state.weights[fach]=state.weights[fach]||{}; state.weights[fach][key]=val; } else if (t==='R'){ const [, fach, cat, type, a, b] = parts; state.rows.push({ fach, cat, type, a:a||'', b:b||'' }); } });
+      // save to child key
+      localStorage.setItem(stateKeyFor(targetChild), JSON.stringify(state)); // ensure child exists
+      const list = loadChildList(); if (!list.includes(targetChild)){ list.push(targetChild); saveChildList(list); }
+      renderChildSelect(); localStorage.setItem(ACTIVE_CHILD_KEY, targetChild); loadStateForChild(targetChild); alert('Import abgeschlossen.'); };
+
+
+    document.addEventListener('DOMContentLoaded',()=>{
+      try{
+      console.log('notenrechner init');
       bindWeightInputs();
-      loadFromStorage();
-      if (childrenData.length === 0){
-        // create sample child and seed rows
-        const id = generateId();
-        const sampleData = { weights: { DE:{sa:40,ans:20,hu:20,mi:20}, MA:{sa:50,lzk:20,hu:15,mi:15} }, rows: { DE:{sa:[],ans:[],hu:[],mi:[]}, MA:{sa:[],lzk:[],hu:[],mi:[]} }, thresholds: { ...thresholds } };
-        childrenData.push({ id, name:'Beispiel', data: sampleData });
-        saveToStorage();
-        // Seed UI rows with demo values
-        updateChildSelect();
+      // Kinderverwaltung initialisieren
+      ensureDefaultChild();
+      renderChildSelect();
+      bindChildButtons();
+      // Versuche gespeicherten Zustand zu laden (für aktiven Schüler), ansonsten initialisieren
+      if (!loadState()){
         seedRows();
-      } else {
-        updateChildSelect();
       }
-      // Ensure initial summaries are recalculated after loading/creating children
-      recalcAll();
+      // Buttons
+      document.getElementById('btnExportCSV').addEventListener('click', exportCSV);
+      document.getElementById('btnImportCSV').addEventListener('click', ()=>document.getElementById('fileImport').click());
+      document.getElementById('fileImport').addEventListener('change', e=>{
+        const f = e.target.files[0];
+        if (f) importCSVFile(f);
+        e.target.value = '';
+      });
+      document.getElementById('btnPrint').addEventListener('click', ()=>window.print());
+      document.getElementById('btnReset').addEventListener('click', ()=>{ if (confirm('Gespeicherte Daten löschen und zurücksetzen?')){ // clear all child data
+          const list = loadChildList(); list.forEach(n=>localStorage.removeItem(stateKeyFor(n))); localStorage.removeItem(CHILD_LIST_KEY); localStorage.removeItem(ACTIVE_CHILD_KEY); location.reload(); }});
+      }catch(err){ console.error('init failed', err); alert('Initialisierung fehlgeschlagen: '+err.message); }
     });
+    
+    
   </script>
-  <!-- jsPDF library for PDF export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <!-- Bootstrap Bundle with Popper -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
