@@ -311,7 +311,7 @@
                 </div>
                 <!-- HU -->
                 <div class="mt-4">
-                  <div class="d-flex justify-content-between alignments-center">
+                  <div class="d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">Hausübung</h6>
                     <button class="btn btn-outline-secondary btn-sm" onclick="addRow('MA','hu','vergessen')"><i class="bi bi-plus"></i> Zeile</button>
                   </div>
@@ -832,5 +832,114 @@
     
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Backup import/export functions and UI injection -->
+  <script>
+    // Export all child data as a JSON backup file
+    function exportBackup() {
+      try {
+        const childList = JSON.parse(localStorage.getItem(CHILD_LIST_KEY) || "[]");
+        const backupData = {};
+        childList.forEach(child => {
+          const stateRaw = localStorage.getItem(stateKeyFor(child));
+          if (stateRaw) {
+            backupData[child] = JSON.parse(stateRaw);
+          }
+        });
+        const blob = new Blob([JSON.stringify(backupData)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'notenrechner-backup.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error('Backup export failed', err);
+        alert('Fehler beim Exportieren des Backups');
+      }
+    }
+
+    // Import backup data from JSON text into localStorage, merging with existing children
+    function importBackupText(text) {
+      try {
+        const data = JSON.parse(text);
+        let list = JSON.parse(localStorage.getItem(CHILD_LIST_KEY) || "[]");
+        Object.keys(data).forEach(origName => {
+          let name = origName;
+          let counter = 1;
+          while (list.includes(name)) {
+            name = origName + ' (Import ' + counter + ')';
+            counter++;
+          }
+          list.push(name);
+          localStorage.setItem(stateKeyFor(name), JSON.stringify(data[origName]));
+        });
+        localStorage.setItem(CHILD_LIST_KEY, JSON.stringify(list));
+        // refresh UI
+        renderChildSelect();
+        loadChildList();
+      } catch (err) {
+        console.error('Backup import failed', err);
+        alert('Fehler beim Importieren des Backups');
+      }
+    }
+
+    // Read a backup file and call importBackupText
+    function importBackupFile(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        importBackupText(e.target.result);
+      };
+      reader.onerror = () => {
+        alert('Fehler beim Lesen der Backup-Datei');
+      };
+      reader.readAsText(file);
+    }
+
+    // Inject backup buttons into the UI and wire event handlers
+    document.addEventListener('DOMContentLoaded', () => {
+      const exportCSVBtn = document.getElementById('btnExportCSV');
+      // Only inject if there is an export CSV button present
+      if (exportCSVBtn) {
+        const parent = exportCSVBtn.parentNode;
+        // Backup export button
+        const btnExportBackup = document.createElement('button');
+        btnExportBackup.id = 'btnExportBackup';
+        btnExportBackup.className = 'btn btn-sm btn-outline-primary';
+        btnExportBackup.innerHTML = '<i class=\"bi bi-download\"></i> Backup (JSON)';
+        parent.insertBefore(btnExportBackup, exportCSVBtn.nextSibling);
+        btnExportBackup.addEventListener('click', exportBackup);
+
+        // Backup import button
+        const btnImportBackup = document.createElement('button');
+        btnImportBackup.id = 'btnImportBackup';
+        btnImportBackup.className = 'btn btn-sm btn-outline-primary';
+        btnImportBackup.innerHTML = '<i class=\"bi bi-upload\"></i> Backup laden';
+        parent.insertBefore(btnImportBackup, btnExportBackup.nextSibling);
+
+        // Hidden file input for backup import
+        const fileImportBackup = document.createElement('input');
+        fileImportBackup.id = 'fileImportBackup';
+        fileImportBackup.type = 'file';
+        fileImportBackup.accept = '.json,application/json';
+        fileImportBackup.style.display = 'none';
+        parent.insertBefore(fileImportBackup, btnImportBackup.nextSibling);
+
+        // Wire import button to trigger file input
+        btnImportBackup.addEventListener('click', () => {
+          fileImportBackup.click();
+        });
+        // Handle file selection
+        fileImportBackup.addEventListener('change', e => {
+          const file = e.target.files[0];
+          if (file) {
+            importBackupFile(file);
+          }
+          e.target.value = '';
+        });
+      }
+    });
+  </script>
 </body>
 </html>
